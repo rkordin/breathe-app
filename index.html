@@ -601,19 +601,20 @@
     gap: 0;
   }
 
-  /* BREATHE wordmark — letter-spaced, weight 200, soft individual letter
-     fade-in. Acts as the visual anchor of the screen. */
+  /* BREATHE wordmark — Cormorant Garamond keeps the screen unified on a
+     single typeface; light weight + wide letter-spacing reads like a
+     vintage spa/sanctuary mark. */
   .welcome-mark{
     margin: 0 0 22px 0;
-    font-family: 'Inter', sans-serif;
-    font-weight: 200;
-    font-size: clamp(34px, 9.5vw, 64px);
-    letter-spacing: .42em;
+    font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+    font-weight: 300;
+    font-size: clamp(36px, 10.5vw, 72px);
+    letter-spacing: .38em;
     color: var(--ink);
     text-transform: uppercase;
-    display: flex; gap: .04em;
+    display: flex; gap: .02em;
     line-height: 1;
-    padding-left: .42em; /* compensate for trailing letter-spacing */
+    padding-left: .38em; /* compensate for trailing letter-spacing */
   }
   .welcome-mark span{
     display: inline-block;
@@ -655,35 +656,38 @@
   }
   /* Each line revealed when its data class is added by JS in sync with
      the voice. Times below match Noemi's cadence. */
+  /* All three lines share Cormorant Garamond — different weights and
+     casing give the hierarchy without breaking unification. */
   .welcome-line-1{
-    font-family: 'Inter', sans-serif;
-    font-weight: 300;
-    font-size: clamp(15px, 3.6vw, 19px);
-    letter-spacing: .14em;
+    font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+    font-weight: 400;
+    font-size: clamp(13px, 3.2vw, 16px);
+    letter-spacing: .26em;
     text-transform: uppercase;
     color: var(--muted);
     margin-bottom: 32px;
   }
   .welcome-line-2{
-    font-family: 'Inter', sans-serif;
-    font-weight: 200;
-    font-size: clamp(20px, 5vw, 28px);
-    line-height: 1.5;
+    font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+    font-weight: 300;
+    font-size: clamp(22px, 5.4vw, 30px);
+    line-height: 1.45;
     margin-bottom: 38px;
+    color: var(--ink);
   }
   .welcome-line-2 em{
-    font-style: normal;
+    font-style: italic;
     font-weight: 400;
-    letter-spacing: .02em;
+    letter-spacing: .01em;
   }
   .welcome-line-3{
     font-family: 'Cormorant Garamond', 'Times New Roman', serif;
     font-style: italic;
     font-weight: 300;
-    font-size: clamp(24px, 6.4vw, 36px);
+    font-size: clamp(26px, 6.8vw, 38px);
     line-height: 1.35;
     color: var(--ink);
-    max-width: 520px;
+    max-width: 540px;
     margin: 0 auto 12px;
   }
   .welcome-quote{
@@ -699,27 +703,54 @@
     opacity: 1; transform: translateY(0); filter: blur(0);
   }
 
+  /* Pill button styling — clearly tappable, frosted-glass card feel.
+     Replaces the previous low-opacity text. Stays in flow at the bottom
+     of the welcome card. */
   .welcome-tap{
-    margin: 28px 0 0 0;
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 300;
+    align-self: center;
+    margin: 36px 0 0 0;
+    font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+    font-weight: 400;
+    font-size: 12px;
     letter-spacing: .42em;
     text-transform: uppercase;
-    color: var(--muted);
-    opacity: .55;
-    animation: welcome-tap-pulse 2.6s ease-in-out infinite;
+    color: var(--ink);
+    padding: 14px 38px 14px 40px; /* extra right pad to balance letter-spacing */
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,.18);
+    background: rgba(255,255,255,.55);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+            backdrop-filter: blur(10px) saturate(1.2);
+    box-shadow: 0 6px 20px -8px rgba(0,0,0,.18);
+    cursor: pointer;
+    transition: background .35s ease, transform .25s ease, box-shadow .25s ease;
+    animation: welcome-tap-breathe 3s ease-in-out infinite;
   }
-  /* Hide tap-to-begin while Noemi is speaking */
-  .welcome.speaking .welcome-tap{ animation: none; opacity: 0; transition: opacity .6s ease; }
-  /* When ready to dismiss, bring it back, slightly stronger */
+  .welcome:hover .welcome-tap{
+    background: rgba(255,255,255,.78);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px -10px rgba(0,0,0,.22);
+  }
+  .welcome.speaking .welcome-tap{
+    animation: none; opacity: 0;
+    transform: translateY(6px);
+    transition: opacity .6s ease, transform .6s ease;
+    pointer-events: none;
+  }
   .welcome.ready .welcome-tap{
-    animation: welcome-tap-pulse 2.4s ease-in-out infinite;
-    opacity: .65;
+    animation: welcome-tap-breathe 2.6s ease-in-out infinite;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
   }
-  @keyframes welcome-tap-pulse{
-    0%,100%{ opacity: .35; }
-    50%   { opacity: .80; }
+  @keyframes welcome-tap-breathe{
+    0%,100%{ box-shadow: 0 6px 20px -8px rgba(0,0,0,.16); transform: translateY(0); }
+    50%   { box-shadow: 0 10px 28px -10px rgba(0,0,0,.22); transform: translateY(-1px); }
+  }
+  body[data-theme="dark"] .welcome-tap{
+    background: rgba(40,40,40,.55);
+    border-color: rgba(255,255,255,.14);
+    color: var(--ink);
   }
   body[data-theme="dark"] .welcome::before{
     background: radial-gradient(ellipse 70% 60% at 50% 50%,
@@ -3997,10 +4028,12 @@
        Tap 2 (once voice has finished) → dismiss → auth card appears
      User can also tap during speech to skip to dismiss. */
   const welcomeEl = document.getElementById('welcome');
-  // Single ElevenLabs request — three sentences chained so cadence is the
-  // voice actor's, not setTimeout. Reveal timings below match her pace.
+  // Single ElevenLabs request. Cadence is hers, not setTimeout — visual
+  // reveal below matches her pace. Note "Noémi" with the acute accent
+  // nudges ElevenLabs toward the Italian "no-EH-mee" pronunciation
+  // (without the accent it tends to anglicise to "NO-eh-mee").
   const WELCOME_VOICE =
-    'Welcome to the breath sanctuary. I am Noemi, your guide for what comes next. The space between two breaths is where everything important happens.';
+    'Welcome to the breath sanctuary. I am Noémi, your guide for what comes next. The space between two breaths is where everything important happens.';
 
   function showWelcome(){
     if(!welcomeEl) return;
