@@ -2472,102 +2472,131 @@
      session, which lets voice (Web Audio) be heard through the silent
      switch and at expected volume. We always create the element on the
      user gesture; if ambient is OFF we just keep volume at 0. */
-  let birdsAudio = null;
-  /* Birds audio goes through a Web Audio gain node because iOS Safari
-     ignores HTMLAudioElement.volume (it's read-only there, always at
-     system volume). With a GainNode we get real volume control. */
-  let birdsSource = null;   // MediaElementAudioSourceNode
-  let birdsGain = null;     // GainNode
-  function ensureBirds(){
-    if(!birdsAudio){
-      birdsAudio = new Audio('/birds.mp3');
-      birdsAudio.loop = true;
-      birdsAudio.preload = 'auto';
-      birdsAudio.playsInline = true;
-      birdsAudio.volume = 1.0;  // controlled via GainNode below; full volume here
+  /* iOS Safari treats HTMLAudioElement.volume as read-only — it's always
+     at system volume. The only reliable way to control birds-track volume
+     on iOS is to load the mp3 into an AudioBuffer and play it through an
+     AudioBufferSourceNode → GainNode → destination. The gain node is the
+     volume control the slider drives. */
+  let birdsBuffer = null;       // decoded AudioBuffer
+  let birdsBufferLoad = null;   // promise while decoding (avoid duplicate fetches)
+  let birdsSource = null;       // currently-playing AudioBufferSourceNode
+  let birdsGain = null;         // GainNode in front of destination
+  let birdsAudio = null;        // legacy alias kept for chest/start references; unused
+
+  function ensureBirdsGain(){
+    if(!audioCtx) return null;
+    if(!birdsGain){
+      birdsGain = audioCtx.createGain();
+      birdsGain.gain.value = 0;
+      birdsGain.connect(audioCtx.destination);
     }
-    // Wire to Web Audio once the AudioContext exists. Idempotent — if the
-    // source is already created, this is a no-op.
-    if(audioCtx && !birdsSource){
-      try {
-        birdsSource = audioCtx.createMediaElementSource(birdsAudio);
-        birdsGain = audioCtx.createGain();
-        birdsGain.gain.value = 0;
-        birdsSource.connect(birdsGain).connect(audioCtx.destination);
-      } catch(e){ /* already connected or unsupported */ }
-    }
-    return birdsAudio;
+    return birdsGain;
   }
-  /* ============ GLOBAL AUDIO UNLOCK ============
-     iOS Safari requires audio to be played inside a user-gesture event
-     handler before any audio (Web Audio context OR HTMLAudio) is allowed
-     to make sound. We bind to the FIRST tap/click anywhere on the page
-     and unlock both at once — Web Audio via ensureAudio() (which already
-     runs an unlock oscillator) plus birdsAudio via a silent play(). After
-     this, both Noemi (Web Audio) and the birds slider work without
-     needing the gesture chain to extend all the way to the volume drag. */
+  function loadBirdsBuffer(){
+    if(birdsBuffer) return Promise.resolve(birdsBuffer);
+    if(birdsBufferLoad) return birdsBufferLoad;
+    if(!audioCtx) return Promise.resolve(null);
+    birdsBufferLoad = (async () => {
+      try {
+        const r = await fetch('/birds.mp3');
+        const arr = await r.arrayBuffer();
+        birdsBuffer = await new Promise((resolve, reject) => {
+          // Older Safari needs the callback form
+          try {
+            const p = audioCtx.decodeAudioData(arr.slice(0), resolve, reject);
+            if(p && p.then) p.then(resolve, reject);
+          } catch(e){ reject(e); }
+        });
+        return birdsBuffer;
+      } catch(e){
+        try { console.warn('birds.mp3 load failed', e && e.message); } catch(_){}
+        return null;
+      } finally {
+        birdsBufferLoad = null;
+      }
+    })();
+    return birdsBufferLoad;
+  }
+  function ensureBirdsPlayback(){
+    if(birdsSource) return;            // already playing
+    if(!audioCtx || !birdsBuffer) return;
+    ensureBirdsGain();
+    const src = audioCtx.createBufferSource();
+    src.buffer = birdsBuffer;
+    src.loop = true;
+    src.connect(birdsGain);
+    try { src.start(0); } catch(e){}
+    birdsSource = src;
+  }
+  function stopBirdsPlayback(){
+    if(birdsSource){
+      try { birdsSource.stop(0); } catch(e){}
+      try { birdsSource.disconnect(); } catch(e){}
+      birdsSource = null;
+    }
+  }
+  // Compatibility shim — kept so existing call sites (startAmbient etc)
+  // don't need to change. Returns null since there's no Audio element now.
+  function ensureBirds(){ return null; }
+
+  /* GLOBAL AUDIO UNLOCK
+     On the first user interaction anywhere, prepare BOTH:
+       1. The Web Audio context (ensureAudio + unlock oscillator already inside).
+       2. The birds buffer + gain node + a silent BufferSource playing at
+          gain=0 so the slider can ramp gain instantly when the user drags. */
   let __audioUnlocked = false;
   function unlockAllAudio(){
     if(__audioUnlocked) return;
     __audioUnlocked = true;
     try { ensureAudio(); } catch(_){}
-    try {
-      const a = ensureBirds();
-      if(a && a.paused){
-        a.volume = 0;
-        const p = a.play();
-        if(p && p.catch) p.catch(() => { __audioUnlocked = false; });
-      }
-    } catch(_){}
+    ensureBirdsGain();
+    // Async: load the buffer, then start silent playback.
+    loadBirdsBuffer().then(buf => {
+      if(buf) ensureBirdsPlayback();
+    }).catch(() => {});
   }
   ['pointerdown','touchstart','click','keydown'].forEach(ev => {
     window.addEventListener(ev, unlockAllAudio, { capture: true, passive: true });
   });
+
   function startAmbient(kind){
-    const a = ensureBirds();
     const target = (kind === 'birds') ? (cfg.ambientVol ?? 0.4) : 0;
-    // Always try to play (so iOS audio session is active), then ramp volume
-    const attemptPlay = () => a.play().catch(err => {
-      try { console.warn('birds.play failed', err && err.name); } catch(_){}
-    });
-    attemptPlay();
-    fadeAmbientVolume(target, 1.5);
+    if(audioCtx){
+      ensureBirdsGain();
+      loadBirdsBuffer().then(buf => {
+        if(buf){
+          ensureBirdsPlayback();
+          fadeAmbientVolume(target, 1.5);
+        }
+      });
+    }
   }
   function stopAmbient(){
-    if(!birdsAudio) return;
     fadeAmbientVolume(0, 0.6, () => {
-      try { birdsAudio.pause(); } catch(e){}
+      // We don't actually stop the source — keep it looping silently so
+      // the next setVolume>0 ramps in instantly, no decode/start latency.
     });
   }
   function setAmbientVolume(v){
-    if(!birdsAudio && !birdsGain) return;
+    if(!birdsGain && audioCtx){ ensureBirdsGain(); }
+    if(!birdsGain) return;
     fadeAmbientVolume(v, 0.25);
-  }
-  let __ambFadeId = null;
-  function fadeAmbientVolume(target, seconds, onDone){
-    // Web Audio path (works on iOS — what HTMLAudioElement.volume cannot)
-    if(birdsGain && audioCtx){
-      const t = audioCtx.currentTime;
-      try {
-        birdsGain.gain.cancelScheduledValues(t);
-        birdsGain.gain.setValueAtTime(birdsGain.gain.value, t);
-        birdsGain.gain.linearRampToValueAtTime(Math.max(0, Math.min(1, target)), t + Math.max(0.05, seconds));
-      } catch(e){}
-      if(onDone) setTimeout(onDone, seconds * 1000);
-      return;
+    // If buffer hasn't loaded yet, kick a load and start playback once ready.
+    if(!birdsBuffer && audioCtx){
+      loadBirdsBuffer().then(buf => { if(buf && v > 0) ensureBirdsPlayback(); });
+    } else if(birdsBuffer && !birdsSource && v > 0){
+      ensureBirdsPlayback();
     }
-    // Fallback (desktop browsers) — set element.volume
-    if(!birdsAudio) return;
-    if(__ambFadeId) clearInterval(__ambFadeId);
-    const start = birdsAudio.volume;
-    const steps = Math.max(8, Math.floor(seconds * 30));
-    let i = 0;
-    __ambFadeId = setInterval(() => {
-      i++;
-      const t = i / steps;
-      birdsAudio.volume = Math.max(0, Math.min(1, start + (target - start) * t));
-      if(i >= steps){ clearInterval(__ambFadeId); __ambFadeId = null; if(onDone) onDone(); }
-    }, (seconds * 1000) / steps);
+  }
+  function fadeAmbientVolume(target, seconds, onDone){
+    if(!birdsGain || !audioCtx) return;
+    const t = audioCtx.currentTime;
+    try {
+      birdsGain.gain.cancelScheduledValues(t);
+      birdsGain.gain.setValueAtTime(birdsGain.gain.value, t);
+      birdsGain.gain.linearRampToValueAtTime(Math.max(0, Math.min(1, target)), t + Math.max(0.05, seconds));
+    } catch(e){}
+    if(onDone) setTimeout(onDone, seconds * 1000);
   }
 
   // Self-contained procedural ambient sounds — no external files needed.
@@ -3489,20 +3518,12 @@
     cfg.ambientVol = v;
     cfg.ambient = v > 0 ? 'birds' : 'none';
     if(save) saveConfig();
-    // Make sure both the AudioContext and the birds Web Audio graph are
-    // wired (needed for iOS where element.volume is read-only). Then
-    // start playback if not already, and let setAmbientVolume ramp the
-    // GainNode — that's what actually controls volume on iOS.
+    // Volume control for birds runs through the Web Audio gain node (the
+    // only way to control volume on iOS). setAmbientVolume handles wiring
+    // the gain, kicking the buffer load if needed, and ramping. We just
+    // make sure the AudioContext is alive on this user gesture.
     if(v > 0){
-      try {
-        ensureAudio();
-        ensureBirds();
-        if(birdsAudio && birdsAudio.paused){
-          birdsAudio.muted = false;
-          const p = birdsAudio.play();
-          if(p && p.catch) p.catch(()=>{});
-        }
-      } catch(e){}
+      try { ensureAudio(); } catch(e){}
     }
     setAmbientVolume(v);
     syncVolUI();
