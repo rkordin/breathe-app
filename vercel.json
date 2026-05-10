@@ -1,4 +1,8 @@
 {
   "version": 2,
-  "cleanUrls": true
+  "cleanUrls": true,
+  "functions": {
+    "api/voice.js": { "maxDuration": 30 },
+    "api/config.js": { "maxDuration": 5 }
+  }
 }
