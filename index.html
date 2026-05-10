@@ -100,8 +100,8 @@
   .intro-leaves.bg-back{
     filter: blur(14px) saturate(.88) brightness(1.06);
     opacity: .85;
-    animation: leaves-back 28s ease-in-out infinite,
-               focus-back  17s ease-in-out infinite;
+    animation: leaves-back 17s ease-in-out infinite,
+               focus-back  11s ease-in-out infinite;
   }
   .intro-leaves.bg-mid{
     inset: -16%;
@@ -111,8 +111,8 @@
     opacity: .55;
     transform: scale(1.05) rotate(-4deg);
     transform-origin: 60% 40%;
-    animation: leaves-mid 26s ease-in-out infinite,
-               focus-mid  13s ease-in-out infinite;
+    animation: leaves-mid 16s ease-in-out infinite,
+               focus-mid  9s ease-in-out infinite;
   }
   .intro-leaves.bg-front{
     inset: -22%;
@@ -121,9 +121,24 @@
     filter: blur(20px) saturate(1.00) brightness(1.05);
     opacity: .50;
     mix-blend-mode: multiply;
-    animation: leaves-front 22s ease-in-out infinite,
-               leaves-spin  37s ease-in-out infinite,
-               focus-front  19s ease-in-out infinite;
+    animation: leaves-front 14s ease-in-out infinite,
+               leaves-spin  23s ease-in-out infinite,
+               focus-front  13s ease-in-out infinite;
+  }
+  /* "Leaf poking out of frosted glass" — a sharp crop of the same photo,
+     masked to a soft elliptical region that fades in and out. */
+  .intro-leaves.bg-sharp{
+    inset: -8%;
+    background-image: url('/leaves.jpg');
+    background-size: 220% auto;
+    background-position: 30% 28%;
+    filter: none;
+    opacity: 0;
+    mix-blend-mode: normal;
+    -webkit-mask-image: radial-gradient(ellipse 26% 32% at 32% 36%, #000 35%, transparent 78%);
+            mask-image: radial-gradient(ellipse 26% 32% at 32% 36%, #000 35%, transparent 78%);
+    animation: leaves-back 17s ease-in-out infinite,
+               sharp-fade 22s ease-in-out infinite;
   }
   .intro-veil{
     position: absolute; inset: 0;
@@ -386,8 +401,8 @@
   .bg-leaves.bg-back{
     filter: blur(14px) saturate(.88) brightness(1.06);
     opacity: .80;
-    animation: leaves-back 28s ease-in-out infinite,
-               focus-back  17s ease-in-out infinite;
+    animation: leaves-back 17s ease-in-out infinite,
+               focus-back  11s ease-in-out infinite;
   }
   .bg-leaves.bg-mid{
     inset: -16%;
@@ -397,8 +412,8 @@
     opacity: .55;
     transform: scale(1.05) rotate(-4deg);
     transform-origin: 60% 40%;
-    animation: leaves-mid 26s ease-in-out infinite,
-               focus-mid  13s ease-in-out infinite;
+    animation: leaves-mid 16s ease-in-out infinite,
+               focus-mid  9s ease-in-out infinite;
   }
   .bg-leaves.bg-front{
     inset: -22%;
@@ -407,9 +422,22 @@
     filter: blur(20px) saturate(1.00) brightness(1.05);
     opacity: .55;
     mix-blend-mode: multiply;
-    animation: leaves-front 22s ease-in-out infinite,
-               leaves-spin  37s ease-in-out infinite,
-               focus-front  19s ease-in-out infinite;
+    animation: leaves-front 14s ease-in-out infinite,
+               leaves-spin  23s ease-in-out infinite,
+               focus-front  13s ease-in-out infinite;
+  }
+  .bg-leaves.bg-sharp{
+    inset: -8%;
+    background-image: url('/leaves.jpg');
+    background-size: 220% auto;
+    background-position: 30% 28%;
+    filter: none;
+    opacity: 0;
+    mix-blend-mode: normal;
+    -webkit-mask-image: radial-gradient(ellipse 26% 32% at 32% 36%, #000 35%, transparent 78%);
+            mask-image: radial-gradient(ellipse 26% 32% at 32% 36%, #000 35%, transparent 78%);
+    animation: leaves-back 17s ease-in-out infinite,
+               sharp-fade 22s ease-in-out infinite;
   }
   /* Soft white veil to keep UI readable on top of the leaves */
   .bg-veil{
@@ -457,6 +485,13 @@
   @keyframes focus-front{
     0%,100%{ filter: blur(20px) saturate(1.00) brightness(1.05); }
     50%   { filter: blur(12px) saturate(1.02) brightness(1.05); }
+  }
+  /* Sharp leaf reveal — appears, holds, dissolves back into the haze. */
+  @keyframes sharp-fade{
+    0%,100%{ opacity: 0; }
+    35%   { opacity: .82; }
+    55%   { opacity: .82; }
+    72%   { opacity: 0; }
   }
 
   /* Dark theme: dim the foliage and warm the veil */
@@ -1235,6 +1270,7 @@
     <div class="intro-leaves bg-back"></div>
     <div class="intro-leaves bg-mid"></div>
     <div class="intro-leaves bg-front"></div>
+    <div class="intro-leaves bg-sharp"></div>
     <div class="intro-veil"></div>
   </div>
   <div class="intro-card">
@@ -1289,6 +1325,7 @@
   <div class="bg-leaves bg-back"></div>
   <div class="bg-leaves bg-mid"></div>
   <div class="bg-leaves bg-front"></div>
+  <div class="bg-leaves bg-sharp"></div>
   <div class="bg-veil"></div>
 </div>
 <div class="pink-glow" id="pink-glow"></div>
@@ -2368,12 +2405,38 @@
       birdsAudio = new Audio('/birds.mp3');
       birdsAudio.loop = true;
       birdsAudio.preload = 'auto';
-      birdsAudio.crossOrigin = 'anonymous';
+      // No crossOrigin — same-origin asset; the attribute trips up iOS for
+      // some Vercel cache configurations and silently blocks playback.
       birdsAudio.playsInline = true;
       birdsAudio.volume = 0;
     }
     return birdsAudio;
   }
+  /* ============ GLOBAL AUDIO UNLOCK ============
+     iOS Safari requires audio to be played inside a user-gesture event
+     handler before any audio (Web Audio context OR HTMLAudio) is allowed
+     to make sound. We bind to the FIRST tap/click anywhere on the page
+     and unlock both at once — Web Audio via ensureAudio() (which already
+     runs an unlock oscillator) plus birdsAudio via a silent play(). After
+     this, both Noemi (Web Audio) and the birds slider work without
+     needing the gesture chain to extend all the way to the volume drag. */
+  let __audioUnlocked = false;
+  function unlockAllAudio(){
+    if(__audioUnlocked) return;
+    __audioUnlocked = true;
+    try { ensureAudio(); } catch(_){}
+    try {
+      const a = ensureBirds();
+      if(a && a.paused){
+        a.volume = 0;
+        const p = a.play();
+        if(p && p.catch) p.catch(() => { __audioUnlocked = false; });
+      }
+    } catch(_){}
+  }
+  ['pointerdown','touchstart','click','keydown'].forEach(ev => {
+    window.addEventListener(ev, unlockAllAudio, { capture: true, passive: true });
+  });
   function startAmbient(kind){
     const a = ensureBirds();
     const target = (kind === 'birds') ? (cfg.ambientVol ?? 0.4) : 0;
