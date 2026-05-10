@@ -7,7 +7,7 @@
 <title>Breathe</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@200;300;400;500&display=swap" rel="stylesheet" />
 <style>
   :root{
     --bg:#f4f4f4;
@@ -562,7 +562,14 @@
     66%   { opacity: .88; }
     85%   { opacity: 0; }
   }
-  /* WELCOME SCREEN — first-visit only, Noemi speaks the line on mount. */
+  /* WELCOME SCREEN — first-visit only.
+     Layout: BREATHE wordmark, hairline divider, three lines of text
+     revealed sequentially in time with Noemi's voice, then "tap to begin"
+     pulses. Tap once to start the voice + reveal; tap again to dismiss. */
+  .sr-only{
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
   .welcome{
     position: fixed; inset: 0;
     z-index: 60;
@@ -573,44 +580,152 @@
   }
   .welcome[hidden]{ display: none; }
   .welcome .intro-bg{ position: absolute; inset: 0; }
+  /* Soft inner light pool centred behind the text */
+  .welcome::before{
+    content: '';
+    position: absolute; inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%,
+                rgba(255,255,255,.55) 0%,
+                rgba(255,255,255,.30) 40%,
+                rgba(255,255,255,.05) 75%,
+                rgba(255,255,255,0) 100%);
+  }
   .welcome-card{
     position: relative; z-index: 2;
-    max-width: min(540px, 88%);
+    max-width: min(620px, 92%);
     text-align: center;
-    padding: 48px 28px;
+    padding: 56px 28px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 0;
   }
-  .welcome-line{
-    margin: 0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* BREATHE wordmark — letter-spaced, weight 200, soft individual letter
+     fade-in. Acts as the visual anchor of the screen. */
+  .welcome-mark{
+    margin: 0 0 22px 0;
+    font-family: 'Inter', sans-serif;
     font-weight: 200;
-    font-size: clamp(20px, 5.4vw, 30px);
-    line-height: 1.45;
-    letter-spacing: .005em;
-    color: var(--ink);
-    opacity: 0;
-    animation: welcome-rise 1.6s ease-out .4s forwards;
-  }
-  .welcome-tap{
-    margin-top: 36px;
-    font-size: 9px;
+    font-size: clamp(34px, 9.5vw, 64px);
     letter-spacing: .42em;
+    color: var(--ink);
     text-transform: uppercase;
-    color: var(--muted);
-    opacity: 0;
-    animation: welcome-tap-rise 1s ease-out 2.8s forwards,
-               welcome-tap-pulse 2.4s ease-in-out 3.4s infinite;
+    display: flex; gap: .04em;
+    line-height: 1;
+    padding-left: .42em; /* compensate for trailing letter-spacing */
   }
-  @keyframes welcome-rise{
+  .welcome-mark span{
+    display: inline-block;
+    opacity: 0;
+    animation: welcome-letter 1.4s ease-out forwards;
+  }
+  .welcome-mark span:nth-child(1){ animation-delay: .10s; }
+  .welcome-mark span:nth-child(2){ animation-delay: .20s; }
+  .welcome-mark span:nth-child(3){ animation-delay: .30s; }
+  .welcome-mark span:nth-child(4){ animation-delay: .40s; }
+  .welcome-mark span:nth-child(5){ animation-delay: .50s; }
+  .welcome-mark span:nth-child(6){ animation-delay: .60s; }
+  .welcome-mark span:nth-child(7){ animation-delay: .70s; }
+  @keyframes welcome-letter{
     0%   { opacity: 0; transform: translateY(8px); filter: blur(6px); }
     100% { opacity: 1; transform: translateY(0);   filter: blur(0);   }
   }
-  @keyframes welcome-tap-rise{
-    0%   { opacity: 0; }
-    100% { opacity: .55; }
+
+  .welcome-rule{
+    display: block;
+    width: 0; height: 1px;
+    background: var(--ink);
+    opacity: .2;
+    margin: 8px 0 30px 0;
+    animation: welcome-rule-grow 1.6s cubic-bezier(.2,.6,.2,1) 1.2s forwards;
+  }
+  @keyframes welcome-rule-grow{
+    0%   { width: 0; }
+    100% { width: 76px; }
+  }
+
+  .welcome-line{
+    margin: 0;
+    color: var(--ink);
+    opacity: 0;
+    transition: opacity 1.2s ease-out, transform 1.2s ease-out, filter 1.2s ease-out;
+    transform: translateY(8px);
+    filter: blur(4px);
+  }
+  /* Each line revealed when its data class is added by JS in sync with
+     the voice. Times below match Noemi's cadence. */
+  .welcome-line-1{
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    font-size: clamp(15px, 3.6vw, 19px);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+  .welcome-line-2{
+    font-family: 'Inter', sans-serif;
+    font-weight: 200;
+    font-size: clamp(20px, 5vw, 28px);
+    line-height: 1.5;
+    margin-bottom: 38px;
+  }
+  .welcome-line-2 em{
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: .02em;
+  }
+  .welcome-line-3{
+    font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(24px, 6.4vw, 36px);
+    line-height: 1.35;
+    color: var(--ink);
+    max-width: 520px;
+    margin: 0 auto 12px;
+  }
+  .welcome-quote{
+    font-size: 1.4em; line-height: 0;
+    color: var(--ink); opacity: .35;
+    margin: 0 .04em;
+  }
+
+  /* Reveal classes set by JS in time with voice cadence */
+  .welcome.show-1 .welcome-line-1,
+  .welcome.show-2 .welcome-line-2,
+  .welcome.show-3 .welcome-line-3{
+    opacity: 1; transform: translateY(0); filter: blur(0);
+  }
+
+  .welcome-tap{
+    margin: 28px 0 0 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: .42em;
+    text-transform: uppercase;
+    color: var(--muted);
+    opacity: .55;
+    animation: welcome-tap-pulse 2.6s ease-in-out infinite;
+  }
+  /* Hide tap-to-begin while Noemi is speaking */
+  .welcome.speaking .welcome-tap{ animation: none; opacity: 0; transition: opacity .6s ease; }
+  /* When ready to dismiss, bring it back, slightly stronger */
+  .welcome.ready .welcome-tap{
+    animation: welcome-tap-pulse 2.4s ease-in-out infinite;
+    opacity: .65;
   }
   @keyframes welcome-tap-pulse{
     0%,100%{ opacity: .35; }
-    50%   { opacity: .75; }
+    50%   { opacity: .80; }
+  }
+  body[data-theme="dark"] .welcome::before{
+    background: radial-gradient(ellipse 70% 60% at 50% 50%,
+                rgba(255,255,255,.10) 0%,
+                rgba(255,255,255,.04) 50%,
+                rgba(0,0,0,0) 90%);
   }
 
   /* Dark theme: dim the foliage and warm the veil */
@@ -1404,11 +1519,26 @@
     <div class="intro-veil"></div>
   </div>
   <div class="welcome-card">
-    <p class="welcome-line" id="welcome-line">
-      Your nervous system is listening to your breath right now.<br/>
-      What it hears next is up to you.
+    <h1 class="welcome-mark">
+      <span aria-hidden="true">B</span>
+      <span aria-hidden="true">R</span>
+      <span aria-hidden="true">E</span>
+      <span aria-hidden="true">A</span>
+      <span aria-hidden="true">T</span>
+      <span aria-hidden="true">H</span>
+      <span aria-hidden="true">E</span>
+      <span class="sr-only">Breathe</span>
+    </h1>
+    <span class="welcome-rule" aria-hidden="true"></span>
+    <p class="welcome-line welcome-line-1">Welcome to the breath sanctuary.</p>
+    <p class="welcome-line welcome-line-2">
+      I am <em>Noemi</em>.<br/>
+      Your guide for what comes next.
     </p>
-    <p class="welcome-tap">tap to begin</p>
+    <p class="welcome-line welcome-line-3">
+      <span class="welcome-quote">“</span>The space between two breaths is where everything important happens.<span class="welcome-quote">”</span>
+    </p>
+    <p class="welcome-tap" id="welcome-tap">tap to begin</p>
   </div>
 </div>
 
@@ -3862,11 +3992,16 @@
   }
 
   /* WELCOME SCREEN — first visit only.
-     Shows a single hand-written line, Noemi reads it aloud, tap dismisses
-     and reveals the auth/intro card. Skips entirely on returning visits. */
+     Two-tap flow:
+       Tap 1 → unlocks audio, Noemi speaks the script, lines reveal in sync
+       Tap 2 (once voice has finished) → dismiss → auth card appears
+     User can also tap during speech to skip to dismiss. */
   const welcomeEl = document.getElementById('welcome');
-  const WELCOME_LINE_TEXT =
-    'Your nervous system is listening to your breath right now. What it hears next is up to you.';
+  // Single ElevenLabs request — three sentences chained so cadence is the
+  // voice actor's, not setTimeout. Reveal timings below match her pace.
+  const WELCOME_VOICE =
+    'Welcome to the breath sanctuary. I am Noemi, your guide for what comes next. The space between two breaths is where everything important happens.';
+
   function showWelcome(){
     if(!welcomeEl) return;
     welcomeEl.hidden = false;
@@ -3875,30 +4010,45 @@
   function dismissWelcome(){
     if(!welcomeEl || welcomeEl.hidden) return;
     welcomeEl.hidden = true;
-    try { localStorage.setItem('breathe-welcome-seen', '1'); } catch(e){}
-    // Only reveal the auth card if the user isn't already signed in
-    // (returning sessions hydrate via getSession → onSignedIn).
+    try { localStorage.setItem('breathe-welcome-seen-v2', '1'); } catch(e){}
     if(intro && !currentUser) intro.hidden = false;
   }
+
   function maybeShowWelcome(){
     let seen = false;
-    try { seen = localStorage.getItem('breathe-welcome-seen') === '1'; } catch(e){}
+    try { seen = localStorage.getItem('breathe-welcome-seen-v2') === '1'; } catch(e){}
     if(seen) return false;
     showWelcome();
-    // Speak the line through Noemi after the user's first interaction
-    // unlocks audio. We arm a once-handler — it'll fire after the global
-    // unlockAllAudio listener has run on the same tap.
-    const speakOnce = () => {
-      try { if(typeof speak === 'function') speak(WELCOME_LINE_TEXT, { rate: 0.92, volume: 1.0 }); } catch(e){}
-      window.removeEventListener('pointerdown', speakOnce, true);
-      window.removeEventListener('touchstart', speakOnce, true);
-      window.removeEventListener('click', speakOnce, true);
+
+    let state = 'idle'; // idle → speaking → ready
+    const onWelcomeTap = (e) => {
+      if(state === 'idle'){
+        // First tap unlocks audio (via global unlockAllAudio capture handler
+        // which fires *before* this listener) and starts the voice.
+        state = 'speaking';
+        welcomeEl.classList.add('speaking');
+        try {
+          if(typeof speak === 'function'){
+            speak(WELCOME_VOICE, { rate: 0.92, volume: 1.0 });
+          }
+        } catch(_){}
+        // Reveal lines in sync with the voice
+        setTimeout(() => welcomeEl.classList.add('show-1'),  400);  // "Welcome to the breath sanctuary."
+        setTimeout(() => welcomeEl.classList.add('show-2'), 3200);  // "I am Noemi..."
+        setTimeout(() => welcomeEl.classList.add('show-3'), 6800);  // The profound line
+        // Voice script ~12-13s; mark ready a touch before the end so the
+        // tap prompt is visible when she finishes.
+        setTimeout(() => {
+          state = 'ready';
+          welcomeEl.classList.add('ready');
+        }, 12500);
+      } else {
+        // Subsequent tap → dismiss (whether speaking or ready)
+        dismissWelcome();
+        welcomeEl.removeEventListener('click', onWelcomeTap);
+      }
     };
-    window.addEventListener('pointerdown', speakOnce, { capture: true, passive: true, once: true });
-    window.addEventListener('touchstart', speakOnce, { capture: true, passive: true, once: true });
-    window.addEventListener('click', speakOnce, { capture: true, passive: true, once: true });
-    // Tap anywhere on the welcome screen → dismiss → show auth.
-    welcomeEl.addEventListener('click', dismissWelcome, { once: true });
+    welcomeEl.addEventListener('click', onWelcomeTap);
     return true;
   }
   // Wire intro auth — email + password, with sign up + forgot
