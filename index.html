@@ -1066,13 +1066,15 @@
   .progress-wrap{
     width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;
   }
-  .bar{
-    width:140px;height:2px;background:var(--soft);border-radius:2px;overflow:hidden;
-  }
+  /* Round/breath progress bar — hidden by request; the orb count and
+     numeric round counter below carry all the progress info. */
+  .bar{ display: none; }
   .bar > i{display:block;height:100%;width:0;background:var(--ink);transition:width .4s ease}
   .count{
-    font-size:10px;letter-spacing:.32em;color:var(--muted);
-    text-transform:uppercase;padding-left:.32em;min-height:12px;
+    font-size:13px; letter-spacing:.36em; color:var(--ink);
+    text-transform:uppercase; padding-left:.36em;
+    min-height:16px; opacity:.85;
+    font-variant-numeric: tabular-nums;
   }
 
   /* Discrete "tap to start" hint sitting on the orb itself.
@@ -1095,13 +1097,14 @@
   }
 
   /* Big breath count on the orb during breathing — also used for the
-     live seconds during the hold-empty / hold-full phases. */
+     live seconds during the hold-empty / hold-full phases. Bumped in
+     size + opacity so it reads clearly through the orb glow. */
   .orb-count{
     position:absolute;
     inset:0;
     display:flex;align-items:center;justify-content:center;
-    font-size: 56px;
-    font-weight: 200;
+    font-size: 72px;
+    font-weight: 250;
     color: var(--ink);
     opacity:0;
     pointer-events:none;
@@ -1109,12 +1112,13 @@
     transition: opacity .35s ease;
     line-height:1;
     letter-spacing: .02em;
+    text-shadow: 0 1px 2px rgba(255,255,255,.55);
   }
   .card[data-phase="inhale"] .orb-count,
-  .card[data-phase="exhale"] .orb-count{ opacity:.55 }
+  .card[data-phase="exhale"] .orb-count{ opacity:.92 }
   .card[data-phase="hold-empty"] .orb-count,
-  .card[data-phase="hold-full"] .orb-count{ opacity:.85; font-size: 64px; font-weight:300 }
-  .orb-count .unit{ font-size: 22px; font-weight: 300; opacity:.55; margin-left: 4px; vertical-align: top; }
+  .card[data-phase="hold-full"] .orb-count{ opacity:1; font-size: 84px; font-weight:300 }
+  .orb-count .unit{ font-size: 24px; font-weight: 300; opacity:.7; margin-left: 4px; vertical-align: top; }
 
   /* End-of-session results panel — sits on the orb area */
   .stats{
@@ -1143,6 +1147,50 @@
   }
   .stats-row .lbl{ font-size: 10px; letter-spacing: .32em; color: var(--muted); text-transform:uppercase; padding-left:.32em }
   .stats-row .val{ font-variant-numeric: tabular-nums; font-weight:300; }
+
+  /* Bar chart of round-by-round hold times. Pure SVG, drawn from
+     state.holdTimes inside showStats(). */
+  .stats-graph{
+    margin-top: 14px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .stats-graph .bar-row{
+    display: grid;
+    grid-template-columns: 56px 1fr 44px;
+    align-items: center;
+    gap: 10px;
+    font-size: 9px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .stats-graph .bar-row .bar-track{
+    position: relative;
+    height: 6px;
+    background: rgba(0,0,0,.06);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .stats-graph .bar-row .bar-fill{
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0;
+    background: linear-gradient(90deg, #6fa86f, #a3d2a3);
+    border-radius: inherit;
+    transition: width 1.2s cubic-bezier(.2,.6,.2,1);
+  }
+  .stats-graph .bar-row .bar-row.best .bar-fill{
+    background: linear-gradient(90deg, #4a8a4a, #7eb87e);
+  }
+  .stats-graph .bar-row .bar-val{
+    text-align: right;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    font-weight: 300;
+    letter-spacing: 0;
+    font-size: 11px;
+  }
+  body[data-theme="dark"] .stats-graph .bar-row .bar-track{ background: rgba(255,255,255,.08); }
   .stats-best{
     margin-top: 8px; font-size: 11px; letter-spacing:.32em; padding-left:.32em;
     color: var(--ink); text-transform:uppercase;
@@ -1192,7 +1240,7 @@
     display: inline-flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 12px;
     transition: gap .25s ease;
   }
   .vol-text{
@@ -1370,16 +1418,17 @@
   /* Live breathing indicator — vertical bar pinned to the right screen
      edge, fills with chest amplitude over the last ~1.5s after subtracting
      the gravity baseline. Visible only when motion is granted + tracking
-     active. */
+     active. A rotated label to the LEFT of the bar names the meter so the
+     user knows what they're looking at. */
   .breath-meter{
     position: fixed;
     top: 50%;
-    right: 6px;
+    right: 8px;
     transform: translateY(-50%);
     width: 6px; height: 140px;
     border-radius: 3px;
     background: rgba(0,0,0,.06);
-    overflow: hidden;
+    overflow: visible;     /* let the label render outside the bar */
     display: none;
     z-index: 60;
   }
@@ -1389,7 +1438,31 @@
     left: 0; right: 0; bottom: 0;
     height: 0%;
     background: linear-gradient(to top, #6fa86f, #a3d2a3);
+    border-radius: inherit;
     transition: height .15s cubic-bezier(.4,0,.2,1);
+  }
+  .breath-meter-label{
+    position: absolute;
+    top: 50%; right: 100%;
+    transform: rotate(-90deg) translate(50%, 0);
+    transform-origin: 100% 50%;
+    margin-right: 14px;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 9px;
+    letter-spacing: .42em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+    opacity: .8;
+    pointer-events: none;
+  }
+  .breath-meter-label .sub{
+    display: block;
+    font-size: 7px;
+    letter-spacing: .32em;
+    margin-top: 2px;
+    opacity: .7;
   }
   body[data-theme="dark"] .breath-meter{ background: rgba(255,255,255,.08); }
   body[data-theme="dark"] .breath-meter > i{ background: linear-gradient(to top, #4a8a4a, #7eb87e); }
@@ -1533,7 +1606,7 @@
 </head>
 <body>
 <div class="toast" id="toast" aria-live="polite"></div>
-<div class="breath-meter" id="breath-meter" aria-hidden="true"><i id="breath-meter-fill"></i></div>
+<div class="breath-meter" id="breath-meter" aria-hidden="true"><span class="breath-meter-label">Breath motion<span class="sub">live</span></span><i id="breath-meter-fill"></i></div>
 
 <!-- Welcome / intro screen — shown on first visit and on sign-out. Hidden
      once the user logs in or chooses guest mode (seenIntro=true). -->
@@ -1685,6 +1758,7 @@
           <div class="stats" id="stats" hidden>
             <div class="stats-title">YOUR HOLDS</div>
             <div class="stats-rows" id="stats-rows"></div>
+            <div class="stats-graph" id="stats-graph" aria-hidden="true"></div>
             <div class="stats-best" id="stats-best"></div>
             <div class="stats-congrats" id="stats-congrats"></div>
           </div>
@@ -3558,6 +3632,29 @@
     });
     const top = state.holdTimes.length ? Math.max(...state.holdTimes) : 0;
     best.innerHTML = top ? ('BEST <span class="v">' + formatHoldSec(top) + '</span>') : '';
+
+    // Bar-graph visualisation of the round-by-round hold times.
+    const graph = document.getElementById('stats-graph');
+    if(graph){
+      graph.innerHTML = '';
+      if(state.holdTimes.length && top > 0){
+        state.holdTimes.forEach((sec, i) => {
+          const row = document.createElement('div');
+          row.className = 'bar-row' + (sec === top ? ' best' : '');
+          const pct = Math.max(4, Math.round((sec / top) * 100));
+          row.innerHTML =
+            '<span>R' + (i + 1) + '</span>' +
+            '<span class="bar-track"><span class="bar-fill"></span></span>' +
+            '<span class="bar-val">' + formatHoldSec(sec) + '</span>';
+          graph.appendChild(row);
+          // Animate from 0 to pct on next frame
+          requestAnimationFrame(() => {
+            const fill = row.querySelector('.bar-fill');
+            if(fill) fill.style.width = pct + '%';
+          });
+        });
+      }
+    }
 
     // Always surface chest tracking status if it was on, so the user knows
     // whether the phone actually saw their breath.
