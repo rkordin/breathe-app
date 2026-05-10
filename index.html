@@ -87,9 +87,12 @@
   }
   .intro-leaves{
     position: absolute; inset: -8%;
-    background-image: url('/leaves.jpg');
-    background-size: cover;
-    background-position: center;
+    background-image: url('/leaves.jpg'),
+                      radial-gradient(60% 80% at 30% 20%, rgba(140,178,138,.55), transparent 70%),
+                      radial-gradient(70% 80% at 80% 70%, rgba(168,198,168,.55), transparent 70%),
+                      linear-gradient(135deg, #b9c8b0, #d8e0d0 45%, #a4b89e);
+    background-size: cover, cover, cover, cover;
+    background-position: center, center, center, center;
     will-change: transform;
   }
   /* Leaves intentionally clearer here than in the breathing screen */
@@ -210,12 +213,11 @@
   }
 
   /* Email magic-link form inside the intro card */
-  .email-form{
-    margin-top: 16px;
+  .auth-form{
+    margin-top: 18px;
     display: flex; flex-direction: column; gap: 10px;
   }
-  .email-form[hidden]{ display: none; }
-  .email-form input[type="email"]{
+  .auth-form input{
     width: 100%;
     padding: 14px 18px;
     border-radius: 28px;
@@ -226,20 +228,44 @@
     outline: none;
     transition: border-color .15s ease, box-shadow .15s ease;
   }
-  .email-form input[type="email"]:focus{
+  .auth-form input:focus{
     border-color: var(--ink); box-shadow: 0 0 0 3px rgba(0,0,0,.06);
   }
-  .email-send{ background: var(--ink) !important; color: #fff !important; border-color: var(--ink) !important; }
-  .email-send:hover{ background: #1a1a1a !important; }
-  .email-note{
-    font-size: 11px; line-height: 1.5; color: var(--muted);
-    text-align: center;
-    min-height: 14px;
+  .auth-submit{ background: var(--ink) !important; color: #fff !important; border-color: var(--ink) !important; }
+  .auth-submit:hover{ background: #1a1a1a !important; }
+  .auth-submit:disabled{ opacity: .55; cursor: default; }
+  .auth-note{
+    font-size: 12px; line-height: 1.5; color: var(--muted);
+    text-align: center; min-height: 16px;
+    transition: color .15s ease;
   }
-  body[data-theme="dark"] .email-form input[type="email"]{
+  .auth-note.err{ color: #b03a2e; }
+  .auth-note.ok{ color: #2e8540; }
+  .auth-links{
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-top: 4px;
+    font-size: 11px; color: var(--muted);
+    flex-wrap: wrap;
+  }
+  .auth-link{
+    background: transparent; border: 0; padding: 4px 2px;
+    color: var(--muted); font: inherit; font-size: 11px;
+    cursor: pointer; text-decoration: underline;
+    text-decoration-color: rgba(0,0,0,.18);
+    text-underline-offset: 3px;
+  }
+  .auth-link:hover{ color: var(--ink); }
+  .auth-link-sep{ opacity: .35; user-select: none; }
+  .intro-promise{
+    display: inline-block; margin-top: 6px;
+    font-size: 10px; letter-spacing: .26em;
+    text-transform: uppercase; color: var(--muted);
+    opacity: .8;
+  }
+  body[data-theme="dark"] .auth-form input{
     background: rgba(40,40,40,.85); border-color: rgba(255,255,255,.12); color: var(--ink);
   }
-  body[data-theme="dark"] .email-send{ background: #f0f0f0 !important; color: #0b0b0b !important; }
+  body[data-theme="dark"] .auth-submit{ background: #f0f0f0 !important; color: #0b0b0b !important; }
 
   /* Profile drawer — overlays the whole screen, frosted card */
   .profile-drawer{
@@ -344,8 +370,11 @@
   }
   .bg-leaves{
     position: absolute; inset: -8%;
-    background-image: url('/leaves.jpg');
-    background-size: cover;
+    background-image: url('/leaves.jpg'),
+                      radial-gradient(60% 80% at 30% 20%, rgba(140,178,138,.45), transparent 70%),
+                      radial-gradient(70% 80% at 80% 70%, rgba(168,198,168,.45), transparent 70%),
+                      linear-gradient(135deg, #c9d4c0, #e2e8d8 45%, #b6c8ae);
+    background-size: cover, cover, cover, cover;
     background-position: center;
     will-change: transform;
     transform-origin: 50% 50%;
@@ -1189,38 +1218,27 @@
   </div>
   <div class="intro-card">
     <h1 class="intro-brand">BREATHE</h1>
-    <p class="intro-tagline">A sanctuary for your breath.</p>
+    <p class="intro-tagline">Your breath, your sanctuary.</p>
     <p class="intro-copy">
-      Save your sessions, see your progress, and watch your breath grow stronger over time.
+      Save your sessions and watch your breath grow stronger over time.<br/>
+      <span class="intro-promise">no spam · only joy</span>
     </p>
 
-    <div class="intro-actions">
-      <button class="intro-btn google" id="intro-google" type="button" hidden>
-        <svg viewBox="0 0 18 18" aria-hidden="true">
-          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
-          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-          <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-        </svg>
-        <span>Continue with Google</span>
+    <div class="auth-form" id="auth-form">
+      <input type="email" id="auth-email" placeholder="you@email.com" autocomplete="email" inputmode="email" />
+      <input type="password" id="auth-password" placeholder="password" autocomplete="current-password" />
+      <button class="intro-btn auth-submit" id="auth-submit" type="button">
+        <span id="auth-submit-label">Sign in</span>
       </button>
-      <button class="intro-btn email" id="intro-email" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="3" y="5" width="18" height="14" rx="2"/>
-          <path d="M3 7l9 6 9-6"/>
-        </svg>
-        <span>Continue with email</span>
-      </button>
+      <div class="auth-note" id="auth-note"></div>
+      <div class="auth-links">
+        <button class="auth-link" id="auth-toggle-mode" type="button">New here? Create account</button>
+        <span class="auth-link-sep">·</span>
+        <button class="auth-link" id="auth-forgot" type="button">Forgot password?</button>
+      </div>
     </div>
 
     <button class="intro-skip" id="intro-skip" type="button">SKIP — TRY AS GUEST</button>
-
-    <!-- Email magic-link form, revealed when "Continue with email" is tapped -->
-    <div class="email-form" id="email-form" hidden>
-      <input type="email" id="email-input" placeholder="you@email.com" autocomplete="email" inputmode="email" />
-      <button class="intro-btn email-send" id="email-send" type="button">Send magic link</button>
-      <div class="email-note" id="email-note"></div>
-    </div>
   </div>
 </div>
 
@@ -3548,55 +3566,108 @@
     try { seen = localStorage.getItem('breathe-intro-seen') === '1'; } catch(e){}
     if(!seen) showIntro();
   }
-  // Wire buttons
-  const introSkip   = document.getElementById('intro-skip');
-  const introGoogle = document.getElementById('intro-google');
-  const introEmail  = document.getElementById('intro-email');
-  const emailForm   = document.getElementById('email-form');
-  const emailInput  = document.getElementById('email-input');
-  const emailSend   = document.getElementById('email-send');
-  const emailNote   = document.getElementById('email-note');
+  // Wire intro auth — email + password, with sign up + forgot
+  const introSkip      = document.getElementById('intro-skip');
+  const authEmail      = document.getElementById('auth-email');
+  const authPassword   = document.getElementById('auth-password');
+  const authSubmit     = document.getElementById('auth-submit');
+  const authSubmitLbl  = document.getElementById('auth-submit-label');
+  const authNote       = document.getElementById('auth-note');
+  const authToggleMode = document.getElementById('auth-toggle-mode');
+  const authForgot     = document.getElementById('auth-forgot');
+  let authMode = 'signin'; // 'signin' | 'signup'
 
-  if(introSkip)   introSkip.addEventListener('click', () => hideIntro());
+  if(introSkip) introSkip.addEventListener('click', () => hideIntro());
 
-  async function oauth(provider){
-    if(!sb){ showToast('Sign-in unavailable'); return; }
-    try {
-      const { error } = await sb.auth.signInWithOAuth({
-        provider,
-        options: { redirectTo: location.origin + location.pathname }
-      });
-      if(error) throw error;
-      // Browser redirects to provider — control returns after callback
-    } catch(e){
-      showToast(provider + ' sign-in is not configured yet');
-    }
+  function setNote(text, kind){
+    if(!authNote) return;
+    authNote.textContent = text || '';
+    authNote.classList.remove('err','ok');
+    if(kind) authNote.classList.add(kind);
   }
-  if(introGoogle) introGoogle.addEventListener('click', () => oauth('google'));
-  if(introEmail)  introEmail.addEventListener('click', () => {
-    if(emailForm) emailForm.hidden = false;
-    if(emailInput) emailInput.focus();
+  function setMode(mode){
+    authMode = mode;
+    if(mode === 'signup'){
+      if(authSubmitLbl) authSubmitLbl.textContent = 'Create account';
+      if(authPassword) authPassword.autocomplete = 'new-password';
+      if(authToggleMode) authToggleMode.textContent = 'Have an account? Sign in';
+    } else {
+      if(authSubmitLbl) authSubmitLbl.textContent = 'Sign in';
+      if(authPassword) authPassword.autocomplete = 'current-password';
+      if(authToggleMode) authToggleMode.textContent = 'New here? Create account';
+    }
+    setNote('');
+  }
+  setMode('signin');
+
+  if(authToggleMode) authToggleMode.addEventListener('click', () => {
+    setMode(authMode === 'signin' ? 'signup' : 'signin');
   });
-  if(emailSend) emailSend.addEventListener('click', async () => {
-    const email = (emailInput && emailInput.value || '').trim();
-    if(!email){ if(emailNote) emailNote.textContent = 'Enter your email above'; return; }
-    if(!sb){ if(emailNote) emailNote.textContent = 'Sign-in unavailable'; return; }
-    emailSend.disabled = true;
-    emailSend.querySelector('span') && (emailSend.querySelector('span').textContent = 'Sending...');
+
+  async function submitAuth(){
+    const email = (authEmail && authEmail.value || '').trim();
+    const password = (authPassword && authPassword.value || '');
+    if(!email){ setNote('Enter your email', 'err'); return; }
+    if(!password || password.length < 6){ setNote('Password must be at least 6 characters', 'err'); return; }
+    if(!sb){ setNote('Sign-in unavailable', 'err'); return; }
+    if(authSubmit) authSubmit.disabled = true;
+    if(authSubmitLbl) authSubmitLbl.textContent = authMode === 'signup' ? 'Creating…' : 'Signing in…';
     try {
-      const { error } = await sb.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: location.origin + location.pathname }
-      });
-      if(error) throw error;
-      if(emailNote) emailNote.textContent = 'Check your inbox — tap the magic link to sign in.';
+      if(authMode === 'signup'){
+        const { data, error } = await sb.auth.signUp({
+          email, password,
+          options: { emailRedirectTo: location.origin + location.pathname }
+        });
+        if(error) throw error;
+        if(data && data.session){
+          // Auto-confirmed + signed in — onAuthStateChange will hide intro
+          setNote('Welcome.', 'ok');
+        } else {
+          setNote('Check your email to confirm — then come back and sign in.', 'ok');
+          setMode('signin');
+        }
+      } else {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if(error) throw error;
+        // success → onAuthStateChange hides intro
+      }
     } catch(e){
-      if(emailNote) emailNote.textContent = (e && e.message) ? e.message : 'Could not send link';
+      const msg = (e && e.message) ? e.message : 'Something went wrong';
+      // Friendly common cases
+      let friendly = msg;
+      if(/invalid login credentials/i.test(msg)) friendly = 'Wrong email or password';
+      else if(/already registered|already exists/i.test(msg)) friendly = 'That email already has an account — try sign in';
+      else if(/email not confirmed/i.test(msg)) friendly = 'Confirm your email first — check your inbox';
+      setNote(friendly, 'err');
     } finally {
       setTimeout(() => {
-        emailSend.disabled = false;
-        emailSend.querySelector('span') && (emailSend.querySelector('span').textContent = 'Send magic link');
-      }, 4000);
+        if(authSubmit) authSubmit.disabled = false;
+        if(authSubmitLbl) authSubmitLbl.textContent = authMode === 'signup' ? 'Create account' : 'Sign in';
+      }, 600);
+    }
+  }
+  if(authSubmit) authSubmit.addEventListener('click', submitAuth);
+  // Submit on Enter from either field
+  [authEmail, authPassword].forEach(el => {
+    if(!el) return;
+    el.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); submitAuth(); } });
+  });
+
+  if(authForgot) authForgot.addEventListener('click', async () => {
+    const email = (authEmail && authEmail.value || '').trim();
+    if(!email){ setNote('Type your email above first', 'err'); return; }
+    if(!sb){ setNote('Reset unavailable', 'err'); return; }
+    authForgot.disabled = true;
+    try {
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: location.origin + location.pathname
+      });
+      if(error) throw error;
+      setNote('Reset link sent — check your inbox.', 'ok');
+    } catch(e){
+      setNote((e && e.message) || 'Could not send reset link', 'err');
+    } finally {
+      setTimeout(() => { authForgot.disabled = false; }, 1500);
     }
   });
 
