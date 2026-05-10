@@ -98,7 +98,7 @@
   /* Frosted-glass: deep blur on every layer + focus-pulse keyframes
      so the leaves drift in and out of focus over time. */
   .intro-leaves.bg-back{
-    filter: blur(14px) saturate(1.10) brightness(1.10);
+    filter: blur(14px) saturate(1.40) brightness(1.16);
     opacity: .85;
     animation: leaves-back 17s ease-in-out infinite,
                focus-back  11s ease-in-out infinite;
@@ -107,7 +107,7 @@
     inset: -16%;
     background-position: 30% 35%;
     background-size: 130% auto;
-    filter: blur(6px) saturate(1.18) brightness(1.06);
+    filter: blur(6px) saturate(1.45) brightness(1.10);
     opacity: .55;
     transform: scale(1.05) rotate(-4deg);
     transform-origin: 60% 40%;
@@ -118,7 +118,7 @@
     inset: -22%;
     background-position: 70% 70%;
     background-size: 160% auto;
-    filter: blur(20px) saturate(1.15) brightness(1.08);
+    filter: blur(20px) saturate(1.50) brightness(1.14);
     opacity: .50;
     mix-blend-mode: multiply;
     animation: leaves-front 14s ease-in-out infinite,
@@ -426,7 +426,7 @@
     transform-origin: 50% 50%;
   }
   .bg-leaves.bg-back{
-    filter: blur(14px) saturate(1.10) brightness(1.10);
+    filter: blur(14px) saturate(1.40) brightness(1.16);
     opacity: .80;
     animation: leaves-back 17s ease-in-out infinite,
                focus-back  11s ease-in-out infinite;
@@ -435,7 +435,7 @@
     inset: -16%;
     background-position: 30% 35%;
     background-size: 130% auto;
-    filter: blur(6px) saturate(1.18) brightness(1.06);
+    filter: blur(6px) saturate(1.45) brightness(1.10);
     opacity: .55;
     transform: scale(1.05) rotate(-4deg);
     transform-origin: 60% 40%;
@@ -446,7 +446,7 @@
     inset: -22%;
     background-position: 70% 70%;
     background-size: 160% auto;
-    filter: blur(20px) saturate(1.15) brightness(1.08);
+    filter: blur(20px) saturate(1.50) brightness(1.14);
     opacity: .55;
     mix-blend-mode: multiply;
     animation: leaves-front 14s ease-in-out infinite,
@@ -529,38 +529,88 @@
      three layers never sharpen together. Slow, breath-like.
      Brightness/saturate boosted for richer colour. */
   @keyframes focus-back{
-    0%,100%{ filter: blur(14px) saturate(1.10) brightness(1.10); }
-    50%   { filter: blur(7px)  saturate(1.20) brightness(1.12); }
+    0%,100%{ filter: blur(14px) saturate(1.40) brightness(1.16); }
+    50%   { filter: blur(7px)  saturate(1.55) brightness(1.20); }
   }
   @keyframes focus-mid{
-    0%,100%{ filter: blur(6px)  saturate(1.18) brightness(1.06); }
-    50%   { filter: blur(2px)  saturate(1.30) brightness(1.08); }
+    0%,100%{ filter: blur(6px)  saturate(1.45) brightness(1.10); }
+    50%   { filter: blur(2px)  saturate(1.65) brightness(1.14); }
   }
   @keyframes focus-front{
-    0%,100%{ filter: blur(20px) saturate(1.15) brightness(1.08); }
-    50%   { filter: blur(11px) saturate(1.30) brightness(1.10); }
+    0%,100%{ filter: blur(20px) saturate(1.50) brightness(1.14); }
+    50%   { filter: blur(11px) saturate(1.70) brightness(1.18); }
   }
-  /* Sharp-leaf reveals — three keyframes with offset peak times so the
-     sharp leaves never crystallise simultaneously. */
+  /* Sharp-leaf reveals — peak opacity bumped so the popping leaf reads
+     more clearly through the haze. */
   @keyframes sharp-fade{
     0%,100%{ opacity: 0; }
-    32%   { opacity: .85; }
-    50%   { opacity: .85; }
+    32%   { opacity: .98; }
+    50%   { opacity: .98; }
     68%   { opacity: 0; }
   }
   @keyframes sharp-fade-b{
     0%,100%{ opacity: 0; }
     18%   { opacity: 0; }
-    44%   { opacity: .80; }
-    62%   { opacity: .80; }
+    44%   { opacity: .92; }
+    62%   { opacity: .92; }
     80%   { opacity: 0; }
   }
   @keyframes sharp-fade-c{
     0%,100%{ opacity: 0; }
     25%   { opacity: 0; }
-    52%   { opacity: .75; }
-    66%   { opacity: .75; }
+    52%   { opacity: .88; }
+    66%   { opacity: .88; }
     85%   { opacity: 0; }
+  }
+  /* WELCOME SCREEN — first-visit only, Noemi speaks the line on mount. */
+  .welcome{
+    position: fixed; inset: 0;
+    z-index: 60;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .welcome[hidden]{ display: none; }
+  .welcome .intro-bg{ position: absolute; inset: 0; }
+  .welcome-card{
+    position: relative; z-index: 2;
+    max-width: min(540px, 88%);
+    text-align: center;
+    padding: 48px 28px;
+  }
+  .welcome-line{
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 200;
+    font-size: clamp(20px, 5.4vw, 30px);
+    line-height: 1.45;
+    letter-spacing: .005em;
+    color: var(--ink);
+    opacity: 0;
+    animation: welcome-rise 1.6s ease-out .4s forwards;
+  }
+  .welcome-tap{
+    margin-top: 36px;
+    font-size: 9px;
+    letter-spacing: .42em;
+    text-transform: uppercase;
+    color: var(--muted);
+    opacity: 0;
+    animation: welcome-tap-rise 1s ease-out 2.8s forwards,
+               welcome-tap-pulse 2.4s ease-in-out 3.4s infinite;
+  }
+  @keyframes welcome-rise{
+    0%   { opacity: 0; transform: translateY(8px); filter: blur(6px); }
+    100% { opacity: 1; transform: translateY(0);   filter: blur(0);   }
+  }
+  @keyframes welcome-tap-rise{
+    0%   { opacity: 0; }
+    100% { opacity: .55; }
+  }
+  @keyframes welcome-tap-pulse{
+    0%,100%{ opacity: .35; }
+    50%   { opacity: .75; }
   }
 
   /* Dark theme: dim the foliage and warm the veil */
@@ -592,12 +642,13 @@
     will-change: opacity, transform;
     transform: scale(.92);
   }
-  /* Screen-wide wash now subtle — the strong glow lives behind the orb */
-  .pink-glow.inhale{ opacity:.42; transform: scale(1.05); transition-duration: var(--inhale, 4s); }
-  .pink-glow.exhale{ opacity:0;   transform: scale(.92);  transition-duration: var(--exhale, 6s); }
-  .pink-glow.hold-full{ opacity:.42; transform: scale(1.05); transition-duration:1.2s; }
-  .pink-glow.hold-empty{ opacity:.10; transform: scale(.95);  transition-duration:1.2s; }
-  .pink-glow.idle{ opacity:.06; transform:scale(.92); transition-duration:1.5s; }
+  /* Glow turned up — visibly present at idle, strong on inhale, gentle
+     fade on exhale (instead of fully invisible). */
+  .pink-glow.inhale{ opacity:.62; transform: scale(1.08); transition-duration: var(--inhale, 4s); }
+  .pink-glow.exhale{ opacity:.18; transform: scale(.94);  transition-duration: var(--exhale, 6s); }
+  .pink-glow.hold-full{ opacity:.58; transform: scale(1.06); transition-duration:1.2s; }
+  .pink-glow.hold-empty{ opacity:.20; transform: scale(.95); transition-duration:1.2s; }
+  .pink-glow.idle{ opacity:.22; transform:scale(.94); transition-duration:1.5s; }
 
   .pink-glow::after{
     content:'';
@@ -878,14 +929,15 @@
     text-transform:uppercase;padding-left:.32em;min-height:12px;
   }
 
-  /* Discrete "tap to start" hint sitting on the orb itself */
+  /* Discrete "tap to start" hint sitting on the orb itself.
+     Smaller + tighter so it never crowds the orb. */
   .orb-hint{
     position:absolute;
     inset:0;
     display:flex;align-items:center;justify-content:center;
-    font-size:9px;letter-spacing:.55em;
+    font-size:7px;letter-spacing:.32em;
     color:var(--ink);text-transform:uppercase;
-    padding-left:.55em;
+    padding-left:.32em;
     pointer-events:none;text-align:center;
     opacity:0;transition:opacity .5s ease;
     z-index:3;
@@ -988,26 +1040,31 @@
   /* Birds volume control — collapsed shows label + speaker; tap the speaker
      to expand the track, then drag the speaker (which IS the thumb) along
      the track to set volume. Auto-collapses after a few seconds of idle. */
+  /* Stack vertically: label below the speaker icon. Avoids any horizontal
+     collision between text and the absolute-positioned thumb. */
   .vol-control{
-    display: inline-flex; align-items: center; gap: 12px;
-    height: 50px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
     transition: gap .25s ease;
   }
   .vol-text{
-    font-size: 9px;
-    letter-spacing: .36em;
+    font-size: 8px;
+    letter-spacing: .30em;
     color: var(--muted);
     text-transform: uppercase;
-    padding-left: .36em;
+    padding-left: .30em;
     white-space: nowrap;
-    transition: opacity .25s ease, max-width .35s cubic-bezier(.4,0,.2,1), margin .25s ease;
+    transition: opacity .25s ease, max-height .35s cubic-bezier(.4,0,.2,1), margin .25s ease;
     overflow: hidden;
-    max-width: 120px;
+    max-height: 14px;
     opacity: .85;
     pointer-events: none;
+    order: 2; /* below the speaker */
   }
   .vol-control.expanded .vol-text{
-    opacity: 0; max-width: 0; margin: 0;
+    opacity: 0; max-height: 0; margin: 0;
   }
 
   .vol-track{
@@ -1334,6 +1391,27 @@
 
 <!-- Welcome / intro screen — shown on first visit and on sign-out. Hidden
      once the user logs in or chooses guest mode (seenIntro=true). -->
+<!-- Welcome screen: shown on first visit only, Noemi speaks the line.
+     Tap anywhere → auth/intro card appears. -->
+<div class="welcome" id="welcome" hidden>
+  <div class="intro-bg" aria-hidden="true">
+    <div class="intro-leaves bg-back"></div>
+    <div class="intro-leaves bg-mid"></div>
+    <div class="intro-leaves bg-front"></div>
+    <div class="intro-leaves bg-sharp"></div>
+    <div class="intro-leaves bg-sharp-2"></div>
+    <div class="intro-leaves bg-sharp-3"></div>
+    <div class="intro-veil"></div>
+  </div>
+  <div class="welcome-card">
+    <p class="welcome-line" id="welcome-line">
+      Your nervous system is listening to your breath right now.<br/>
+      What it hears next is up to you.
+    </p>
+    <p class="welcome-tap">tap to begin</p>
+  </div>
+</div>
+
 <div class="intro" id="intro" hidden>
   <div class="intro-bg" aria-hidden="true">
     <div class="intro-leaves bg-back"></div>
@@ -3782,6 +3860,47 @@
     try { seen = localStorage.getItem('breathe-intro-seen') === '1'; } catch(e){}
     if(!seen) showIntro();
   }
+
+  /* WELCOME SCREEN — first visit only.
+     Shows a single hand-written line, Noemi reads it aloud, tap dismisses
+     and reveals the auth/intro card. Skips entirely on returning visits. */
+  const welcomeEl = document.getElementById('welcome');
+  const WELCOME_LINE_TEXT =
+    'Your nervous system is listening to your breath right now. What it hears next is up to you.';
+  function showWelcome(){
+    if(!welcomeEl) return;
+    welcomeEl.hidden = false;
+    if(intro) intro.hidden = true;
+  }
+  function dismissWelcome(){
+    if(!welcomeEl || welcomeEl.hidden) return;
+    welcomeEl.hidden = true;
+    try { localStorage.setItem('breathe-welcome-seen', '1'); } catch(e){}
+    // Only reveal the auth card if the user isn't already signed in
+    // (returning sessions hydrate via getSession → onSignedIn).
+    if(intro && !currentUser) intro.hidden = false;
+  }
+  function maybeShowWelcome(){
+    let seen = false;
+    try { seen = localStorage.getItem('breathe-welcome-seen') === '1'; } catch(e){}
+    if(seen) return false;
+    showWelcome();
+    // Speak the line through Noemi after the user's first interaction
+    // unlocks audio. We arm a once-handler — it'll fire after the global
+    // unlockAllAudio listener has run on the same tap.
+    const speakOnce = () => {
+      try { if(typeof speak === 'function') speak(WELCOME_LINE_TEXT, { rate: 0.92, volume: 1.0 }); } catch(e){}
+      window.removeEventListener('pointerdown', speakOnce, true);
+      window.removeEventListener('touchstart', speakOnce, true);
+      window.removeEventListener('click', speakOnce, true);
+    };
+    window.addEventListener('pointerdown', speakOnce, { capture: true, passive: true, once: true });
+    window.addEventListener('touchstart', speakOnce, { capture: true, passive: true, once: true });
+    window.addEventListener('click', speakOnce, { capture: true, passive: true, once: true });
+    // Tap anywhere on the welcome screen → dismiss → show auth.
+    welcomeEl.addEventListener('click', dismissWelcome, { once: true });
+    return true;
+  }
   // Wire intro auth — email + password, with sign up + forgot
   const introSkip      = document.getElementById('intro-skip');
   const authEmail      = document.getElementById('auth-email');
@@ -4018,7 +4137,10 @@
   renderChestStatus();
   reset();
   loadRuntimeConfig();
-  maybeShowIntro();
+  // Welcome → Auth → App. If welcome already shown, jump to auth (or
+  // straight to the app if already signed in — auth state listener will
+  // hide the intro).
+  if(!maybeShowWelcome()) maybeShowIntro();
 })();
 </script>
 </body>
