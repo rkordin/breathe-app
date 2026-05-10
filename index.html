@@ -3331,7 +3331,15 @@
     if(v > 0){
       try {
         ensureBirds();
-        birdsAudio && birdsAudio.play && birdsAudio.play().catch(()=>{});
+        if(birdsAudio){
+          // onDown muted the audio for the iOS unlock; unmute now so the
+          // ramp-in volume is actually audible.
+          birdsAudio.muted = false;
+          if(birdsAudio.paused){
+            const p = birdsAudio.play();
+            if(p && p.catch) p.catch(()=>{});
+          }
+        }
       } catch(e){}
     }
     setAmbientVolume(v);
@@ -3348,8 +3356,20 @@
     const onDown = (e) => {
       e.preventDefault();
       e.stopPropagation();
-      drag = { moved: false, startPct: cfg.ambientVol * 100 };
+      drag = { moved: false, startPct: (cfg.ambientVol ?? 0.4) * 100 };
       volTrack.classList.add('dragging');
+      // iOS unlock: prime the audio element on this user gesture so a
+      // later drag (different gesture phase) can call play() successfully.
+      // We start it muted so the user doesn't hear anything during the
+      // tap itself — applyVol() ramps real volume in on drag.
+      try {
+        const a = ensureBirds();
+        if(a && a.paused){
+          a.muted = true;
+          const p = a.play();
+          if(p && p.catch) p.catch(()=>{});
+        }
+      } catch(_){}
       // Capture pointer for smooth drag
       try { e.pointerId != null && volTrack.setPointerCapture(e.pointerId); } catch(_){}
     };
