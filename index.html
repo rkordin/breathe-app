@@ -95,31 +95,35 @@
     background-position: center, center, center, center;
     will-change: transform;
   }
-  /* Leaves intentionally clearer here than in the breathing screen */
+  /* Frosted-glass: deep blur on every layer + focus-pulse keyframes
+     so the leaves drift in and out of focus over time. */
   .intro-leaves.bg-back{
-    filter: blur(6px) saturate(.95) brightness(1.04);
-    opacity: .95;
-    animation: leaves-back 28s ease-in-out infinite;
+    filter: blur(14px) saturate(.88) brightness(1.06);
+    opacity: .85;
+    animation: leaves-back 28s ease-in-out infinite,
+               focus-back  17s ease-in-out infinite;
   }
   .intro-leaves.bg-mid{
     inset: -16%;
     background-position: 30% 35%;
     background-size: 130% auto;
-    filter: blur(2px) saturate(1.05) brightness(1.0);
-    opacity: .65;
+    filter: blur(6px) saturate(.95) brightness(1.02);
+    opacity: .55;
     transform: scale(1.05) rotate(-4deg);
     transform-origin: 60% 40%;
-    animation: leaves-mid 26s ease-in-out infinite;
+    animation: leaves-mid 26s ease-in-out infinite,
+               focus-mid  13s ease-in-out infinite;
   }
   .intro-leaves.bg-front{
     inset: -22%;
     background-position: 70% 70%;
     background-size: 160% auto;
-    filter: blur(10px) saturate(1.0) brightness(1.05);
-    opacity: .55;
+    filter: blur(20px) saturate(1.00) brightness(1.05);
+    opacity: .50;
     mix-blend-mode: multiply;
     animation: leaves-front 22s ease-in-out infinite,
-               leaves-spin  37s ease-in-out infinite;
+               leaves-spin  37s ease-in-out infinite,
+               focus-front  19s ease-in-out infinite;
   }
   .intro-veil{
     position: absolute; inset: 0;
@@ -382,7 +386,8 @@
   .bg-leaves.bg-back{
     filter: blur(14px) saturate(.88) brightness(1.06);
     opacity: .80;
-    animation: leaves-back 28s ease-in-out infinite;
+    animation: leaves-back 28s ease-in-out infinite,
+               focus-back  17s ease-in-out infinite;
   }
   .bg-leaves.bg-mid{
     inset: -16%;
@@ -392,7 +397,8 @@
     opacity: .55;
     transform: scale(1.05) rotate(-4deg);
     transform-origin: 60% 40%;
-    animation: leaves-mid 26s ease-in-out infinite;
+    animation: leaves-mid 26s ease-in-out infinite,
+               focus-mid  13s ease-in-out infinite;
   }
   .bg-leaves.bg-front{
     inset: -22%;
@@ -402,7 +408,8 @@
     opacity: .55;
     mix-blend-mode: multiply;
     animation: leaves-front 22s ease-in-out infinite,
-               leaves-spin  37s ease-in-out infinite;
+               leaves-spin  37s ease-in-out infinite,
+               focus-front  19s ease-in-out infinite;
   }
   /* Soft white veil to keep UI readable on top of the leaves */
   .bg-veil{
@@ -436,6 +443,20 @@
     0%,100%{ rotate: 0deg; }
     33%    { rotate: 0.5deg; }
     66%    { rotate: -0.4deg; }
+  }
+  /* Focus-pulse — leaves drift in and out of focus, staggered so the
+     three layers never sharpen together. Slow, breath-like. */
+  @keyframes focus-back{
+    0%,100%{ filter: blur(14px) saturate(.88) brightness(1.06); }
+    50%   { filter: blur(8px)  saturate(.92) brightness(1.05); }
+  }
+  @keyframes focus-mid{
+    0%,100%{ filter: blur(6px)  saturate(.95) brightness(1.02); }
+    50%   { filter: blur(2px)  saturate(1.00) brightness(1.02); }
+  }
+  @keyframes focus-front{
+    0%,100%{ filter: blur(20px) saturate(1.00) brightness(1.05); }
+    50%   { filter: blur(12px) saturate(1.02) brightness(1.05); }
   }
 
   /* Dark theme: dim the foliage and warm the veil */
