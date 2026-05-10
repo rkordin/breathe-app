@@ -1,0 +1,3738 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="theme-color" content="#f4f4f4" />
+<title>Breathe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f4f4f4;
+    --card:#ffffff;
+    --ink:#0e0e0e;
+    --muted:#6b6b6b;        /* darker for readability over the glow */
+    --soft:#ececec;
+    --shadow: 0 30px 60px -20px rgba(0,0,0,.12), 0 8px 20px -10px rgba(0,0,0,.08);
+    --inhale: 4000ms;
+    --exhale: 6000ms;
+  }
+  /* Dark mode */
+  body[data-theme="dark"]{
+    --bg:#0b0b0b;
+    --card:#161616;
+    --ink:#f0f0f0;
+    --muted:#a0a0a0;
+    --soft:#262626;
+    --shadow: 0 30px 60px -20px rgba(0,0,0,.55), 0 8px 20px -10px rgba(0,0,0,.35);
+  }
+  body[data-theme="dark"] .core{
+    background:
+      radial-gradient(circle at 36% 30%,
+        #2e2e2e 0%, #232323 35%, #181818 70%, #0e0e0e 100%);
+    box-shadow:
+      inset -14px -22px 40px rgba(0,0,0,.5),
+      inset 10px 14px 28px rgba(255,255,255,.05),
+      0 30px 50px -22px rgba(0,0,0,.6);
+  }
+  body[data-theme="dark"] .ring{ border-color: rgba(255,255,255,.06) !important; }
+  body[data-theme="dark"] .halo{
+    background: radial-gradient(circle, rgba(255,255,255,.06) 0%, rgba(255,255,255,0) 65%);
+  }
+  body[data-theme="dark"] .icon-btn{ color: var(--ink); }
+  body[data-theme="dark"] .ctl{ border-color: rgba(255,255,255,.18); color: var(--ink); }
+  body[data-theme="dark"] .ctl:hover{ background: rgba(255,255,255,.06); }
+  body[data-theme="dark"] .stepper, body[data-theme="dark"] .seg{
+    border-color: rgba(255,255,255,.10);
+  }
+  body[data-theme="dark"] .seg button.active{ background: var(--ink); color: #0b0b0b; }
+  body[data-theme="dark"] .stepper button{ color: var(--ink); }
+  body[data-theme="dark"] .drawer{ background: var(--card); color: var(--ink); }
+  body[data-theme="dark"] .drawer-footer .done{ background: #f0f0f0; color: #0b0b0b; }
+  body[data-theme="dark"] .drawer-footer .reset{ color: var(--muted); border-color: rgba(255,255,255,.10); }
+  body[data-theme="dark"] .bar{ background: var(--soft); }
+  body[data-theme="dark"] .bar > i{ background: var(--ink); }
+  body[data-theme="dark"] .pink-glow{ mix-blend-mode: screen; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    font-weight:300;
+    overscroll-behavior:none;
+    user-select:none;
+    -webkit-user-select:none;
+    position:relative;
+    overflow:hidden;
+  }
+  .stage{ position:relative; z-index:5; }
+
+  /* ====== WELCOME / INTRO SCREEN ====== */
+  .intro{
+    position: fixed; inset: 0;
+    z-index: 400;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    overflow: hidden;
+  }
+  .intro[hidden]{ display: none; }
+  .intro-bg{
+    position: absolute; inset: 0;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .intro-leaves{
+    position: absolute; inset: -8%;
+    background-image: url('/leaves.jpg');
+    background-size: cover;
+    background-position: center;
+    will-change: transform;
+  }
+  /* Leaves intentionally clearer here than in the breathing screen */
+  .intro-leaves.bg-back{
+    filter: blur(6px) saturate(.95) brightness(1.04);
+    opacity: .95;
+    animation: leaves-back 28s ease-in-out infinite;
+  }
+  .intro-leaves.bg-mid{
+    inset: -16%;
+    background-position: 30% 35%;
+    background-size: 130% auto;
+    filter: blur(2px) saturate(1.05) brightness(1.0);
+    opacity: .65;
+    transform: scale(1.05) rotate(-4deg);
+    transform-origin: 60% 40%;
+    animation: leaves-mid 26s ease-in-out infinite;
+  }
+  .intro-leaves.bg-front{
+    inset: -22%;
+    background-position: 70% 70%;
+    background-size: 160% auto;
+    filter: blur(10px) saturate(1.0) brightness(1.05);
+    opacity: .55;
+    mix-blend-mode: multiply;
+    animation: leaves-front 22s ease-in-out infinite,
+               leaves-spin  37s ease-in-out infinite;
+  }
+  .intro-veil{
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 90% 75% at 50% 50%, rgba(255,255,255,.42) 0%, rgba(255,255,255,.18) 70%, rgba(255,255,255,.06) 100%);
+    pointer-events: none;
+  }
+
+  .intro-card{
+    position: relative; z-index: 2;
+    width: min(420px, 100%);
+    background: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(22px) saturate(1.1);
+    -webkit-backdrop-filter: blur(22px) saturate(1.1);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: 32px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,.18), 0 8px 20px -10px rgba(0,0,0,.10);
+    padding: 36px 28px 28px;
+    text-align: center;
+    color: var(--ink);
+  }
+  .intro-brand{
+    margin: 0 0 8px;
+    font-size: 22px;
+    letter-spacing: .42em;
+    font-weight: 400;
+    padding-left: .42em;
+  }
+  .intro-tagline{
+    margin: 0 0 18px;
+    font-size: 11px;
+    letter-spacing: .32em;
+    text-transform: uppercase;
+    padding-left: .32em;
+    color: var(--muted);
+  }
+  .intro-copy{
+    margin: 0 0 28px;
+    font-size: 14px;
+    line-height: 1.55;
+    font-weight: 300;
+    color: var(--ink);
+    opacity: .85;
+  }
+  .intro-actions{
+    display: flex; flex-direction: column; gap: 10px;
+    margin-bottom: 22px;
+  }
+  .intro-btn{
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 28px;
+    border: 1px solid rgba(0,0,0,.10);
+    background: rgba(255,255,255,.85);
+    color: var(--ink);
+    font-family: inherit;
+    font-weight: 400;
+    font-size: 13px;
+    letter-spacing: .04em;
+    cursor: pointer;
+    transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
+  }
+  .intro-btn:active{ transform: scale(.98); }
+  .intro-btn:hover{ background: #fff; box-shadow: 0 6px 18px -8px rgba(0,0,0,.18); }
+  .intro-btn svg{ width: 18px; height: 18px; flex: 0 0 auto; }
+  .intro-skip{
+    background: none; border: 0; cursor: pointer;
+    color: var(--muted);
+    font-family: inherit; font-weight: 400;
+    font-size: 10px;
+    letter-spacing: .32em;
+    padding: 10px 16px;
+    padding-left: .32em;
+  }
+  .intro-skip:active{ opacity: .6; }
+
+  body[data-theme="dark"] .intro-card{
+    background: rgba(20,20,20,0.62);
+    border-color: rgba(255,255,255,.10);
+  }
+  body[data-theme="dark"] .intro-btn{
+    background: rgba(40,40,40,.85);
+    border-color: rgba(255,255,255,.12);
+    color: var(--ink);
+  }
+  body[data-theme="dark"] .intro-btn:hover{ background: #2a2a2a; }
+  body[data-theme="dark"] .intro-veil{
+    background:
+      radial-gradient(ellipse 90% 75% at 50% 50%, rgba(0,0,0,.30) 0%, rgba(0,0,0,.55) 70%, rgba(0,0,0,.70) 100%);
+  }
+
+  /* Email magic-link form inside the intro card */
+  .email-form{
+    margin-top: 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .email-form[hidden]{ display: none; }
+  .email-form input[type="email"]{
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 28px;
+    border: 1px solid rgba(0,0,0,.10);
+    background: rgba(255,255,255,.85);
+    color: var(--ink);
+    font-family: inherit; font-size: 14px;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .email-form input[type="email"]:focus{
+    border-color: var(--ink); box-shadow: 0 0 0 3px rgba(0,0,0,.06);
+  }
+  .email-send{ background: var(--ink) !important; color: #fff !important; border-color: var(--ink) !important; }
+  .email-send:hover{ background: #1a1a1a !important; }
+  .email-note{
+    font-size: 11px; line-height: 1.5; color: var(--muted);
+    text-align: center;
+    min-height: 14px;
+  }
+  body[data-theme="dark"] .email-form input[type="email"]{
+    background: rgba(40,40,40,.85); border-color: rgba(255,255,255,.12); color: var(--ink);
+  }
+  body[data-theme="dark"] .email-send{ background: #f0f0f0 !important; color: #0b0b0b !important; }
+
+  /* Profile drawer — overlays the whole screen, frosted card */
+  .profile-drawer{
+    position: fixed; inset: 0;
+    z-index: 350;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(0,0,0,.18);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .profile-drawer[hidden]{ display: none; }
+  .profile-card{
+    position: relative;
+    width: min(420px, 100%);
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.65);
+    border-radius: 28px;
+    padding: 32px 26px 26px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,.25);
+    color: var(--ink);
+  }
+  .profile-close{
+    position: absolute; top: 12px; left: 12px;
+  }
+  .profile-name{
+    margin: 0 0 4px;
+    font-size: 13px; letter-spacing: .42em; font-weight: 400;
+    text-align: center;
+    padding-left: .42em;
+  }
+  .profile-email{
+    margin: 0 0 22px;
+    font-size: 11px; letter-spacing: .12em; color: var(--muted);
+    text-align: center;
+  }
+  .profile-stats{
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; margin-bottom: 24px;
+  }
+  .profile-stat{ text-align: center; }
+  .profile-stat .lbl{
+    font-size: 9px; letter-spacing: .32em; color: var(--muted); padding-left: .32em;
+  }
+  .profile-stat .val{
+    font-size: 22px; font-weight: 200; margin-top: 4px;
+  }
+  .profile-section{
+    font-size: 10px; letter-spacing: .42em; color: var(--muted);
+    margin: 0 0 12px; padding-left: .42em;
+    font-weight: 400;
+  }
+  .profile-list{
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 22px;
+    max-height: 280px; overflow-y: auto;
+  }
+  .profile-item{
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(0,0,0,.03);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .profile-item .when{ color: var(--muted); font-size: 11px; letter-spacing: .04em; }
+  .profile-item .stat{ font-weight: 300; }
+  .profile-empty{
+    text-align: center; padding: 24px 8px; color: var(--muted);
+    font-size: 12px; line-height: 1.55;
+  }
+  .profile-signout{
+    width: 100%;
+    padding: 12px; border-radius: 28px;
+    background: transparent; border: 1px solid rgba(0,0,0,.10);
+    color: var(--muted);
+    font-family: inherit; font-size: 10px; letter-spacing: .32em;
+    text-transform: uppercase; padding-left: .32em;
+    cursor: pointer;
+  }
+  .profile-signout:hover{ color: var(--ink); border-color: var(--ink); }
+  body[data-theme="dark"] .profile-card{
+    background: rgba(20,20,20,0.92); border-color: rgba(255,255,255,.10);
+  }
+  body[data-theme="dark"] .profile-item{ background: rgba(255,255,255,.05); }
+  body[data-theme="dark"] .profile-signout{ border-color: rgba(255,255,255,.12); }
+
+  /* ====== LEAVES BACKGROUND ======
+     Two layered, blurred copies of the same photo — the back layer drifts
+     slower and bigger, the front layer faster and smaller. Combined they
+     read as foliage stirring in a breeze. */
+  .bg-scene{
+    position: fixed; inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .bg-leaves{
+    position: absolute; inset: -8%;
+    background-image: url('/leaves.jpg');
+    background-size: cover;
+    background-position: center;
+    will-change: transform;
+    transform-origin: 50% 50%;
+  }
+  .bg-leaves.bg-back{
+    filter: blur(14px) saturate(.88) brightness(1.06);
+    opacity: .80;
+    animation: leaves-back 28s ease-in-out infinite;
+  }
+  .bg-leaves.bg-mid{
+    inset: -16%;
+    background-position: 30% 35%;
+    background-size: 130% auto;
+    filter: blur(6px) saturate(.95) brightness(1.02);
+    opacity: .55;
+    transform: scale(1.05) rotate(-4deg);
+    transform-origin: 60% 40%;
+    animation: leaves-mid 26s ease-in-out infinite;
+  }
+  .bg-leaves.bg-front{
+    inset: -22%;
+    background-position: 70% 70%;
+    background-size: 160% auto;
+    filter: blur(20px) saturate(1.00) brightness(1.05);
+    opacity: .55;
+    mix-blend-mode: multiply;
+    animation: leaves-front 22s ease-in-out infinite,
+               leaves-spin  37s ease-in-out infinite;
+  }
+  /* Soft white veil to keep UI readable on top of the leaves */
+  .bg-veil{
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 70% at 50% 50%, rgba(255,255,255,.55) 0%, rgba(255,255,255,.30) 60%, rgba(255,255,255,.10) 100%),
+      linear-gradient(180deg, rgba(255,255,255,.35) 0%, rgba(255,255,255,.18) 60%, rgba(255,255,255,.45) 100%);
+    pointer-events: none;
+  }
+
+  @keyframes leaves-back{
+    0%,100%{ transform: translate3d(0,0,0)        scale(1.10); }
+    25%    { transform: translate3d(-10px,4px,0)  scale(1.115); }
+    50%    { transform: translate3d(8px,-5px,0)   scale(1.12); }
+    75%    { transform: translate3d(-4px,7px,0)   scale(1.108); }
+  }
+  @keyframes leaves-mid{
+    0%,100%{ transform: scale(1.05)  translate3d(0,0,0)         rotate(-4deg); }
+    25%    { transform: scale(1.06)  translate3d(8px,-3px,0)    rotate(-3.4deg); }
+    50%    { transform: scale(1.05)  translate3d(-6px,5px,0)    rotate(-4.6deg); }
+    75%    { transform: scale(1.07)  translate3d(4px,-7px,0)    rotate(-3.6deg); }
+  }
+  @keyframes leaves-front{
+    0%,100%{ transform: translate3d(0,0,0)        scale(1.20); }
+    20%    { transform: translate3d(14px,-6px,0)  scale(1.205); }
+    40%    { transform: translate3d(-9px,8px,0)   scale(1.215); }
+    60%    { transform: translate3d(11px,4px,0)   scale(1.21); }
+    80%    { transform: translate3d(-7px,-9px,0)  scale(1.222); }
+  }
+  @keyframes leaves-spin{
+    0%,100%{ rotate: 0deg; }
+    33%    { rotate: 0.5deg; }
+    66%    { rotate: -0.4deg; }
+  }
+
+  /* Dark theme: dim the foliage and warm the veil */
+  body[data-theme="dark"] .bg-scene{ background: #0a0a0a; }
+  body[data-theme="dark"] .bg-leaves{ filter: blur(28px) saturate(.6) brightness(.45); }
+  body[data-theme="dark"] .bg-leaves.bg-front{ filter: blur(38px) saturate(.5) brightness(.40); mix-blend-mode: normal; opacity: .65; }
+  body[data-theme="dark"] .bg-veil{
+    background:
+      radial-gradient(ellipse 80% 70% at 50% 50%, rgba(0,0,0,.20) 0%, rgba(0,0,0,.55) 70%, rgba(0,0,0,.75) 100%);
+  }
+
+  /* ====== PINK GLOW (full screen) ======
+     Plain alpha overlay (no mix-blend-mode + no filter:blur on the same
+     element — that combination is broken on most iOS Safari versions and
+     renders nothing at all). The radial-gradient itself is the soft falloff. */
+  .pink-glow{
+    position:fixed;inset:0;
+    pointer-events:none;
+    background:
+      radial-gradient(ellipse 90% 75% at 50% 45%,
+        rgba(var(--glow-deep, 255, 90, 155), 0.63) 0%,
+        rgba(var(--glow-mid,  255, 120, 175), 0.48) 18%,
+        rgba(var(--glow-soft, 255, 160, 200), 0.30) 40%,
+        rgba(var(--glow-fade, 255, 200, 220), 0.14) 65%,
+        rgba(var(--glow-fade, 255, 220, 230), 0.00) 100%);
+    opacity:0;
+    z-index:100;
+    transition: opacity 4s cubic-bezier(.4,0,.2,1), transform 4s cubic-bezier(.4,0,.2,1);
+    will-change: opacity, transform;
+    transform: scale(.92);
+  }
+  /* Screen-wide wash now subtle — the strong glow lives behind the orb */
+  .pink-glow.inhale{ opacity:.42; transform: scale(1.05); transition-duration: var(--inhale, 4s); }
+  .pink-glow.exhale{ opacity:0;   transform: scale(.92);  transition-duration: var(--exhale, 6s); }
+  .pink-glow.hold-full{ opacity:.42; transform: scale(1.05); transition-duration:1.2s; }
+  .pink-glow.hold-empty{ opacity:.10; transform: scale(.95);  transition-duration:1.2s; }
+  .pink-glow.idle{ opacity:.06; transform:scale(.92); transition-duration:1.5s; }
+
+  .pink-glow::after{
+    content:'';
+    position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse 45% 45% at 50% 50%,
+        rgba(var(--glow-deep, 255, 70, 145), 0.46) 0%,
+        rgba(var(--glow-mid,  255, 130, 180), 0.21) 35%,
+        rgba(var(--glow-fade, 255, 220, 230), 0.00) 75%);
+  }
+
+  /* Single sage-green glow tuned to the leaves background */
+  body{
+    --glow-deep: 138, 178, 138;
+    --glow-mid:  170, 200, 168;
+    --glow-soft: 200, 220, 200;
+    --glow-fade: 230, 240, 226;
+  }
+
+  .stage{
+    min-height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .card{
+    position:relative;
+    width:min(440px,100%);
+    aspect-ratio: 9/19;
+    max-height: calc(100dvh - 48px);
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(8px) saturate(1.05);
+    -webkit-backdrop-filter: blur(8px) saturate(1.05);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius:38px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    isolation:isolate;
+  }
+  body[data-theme="dark"] .card{
+    background: rgba(20, 20, 20, 0.45);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  @media (max-width:520px){
+    .stage{padding:0}
+    .card{
+      width:100%;
+      height:100dvh;
+      max-height:none;
+      aspect-ratio:auto;
+      border-radius:0;
+      box-shadow:none;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border: none;
+    }
+  }
+
+  /* HEADER */
+  .header{
+    position:absolute;top:0;left:0;right:0;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:22px 22px 0;
+    z-index:5;
+  }
+  .icon-btn{
+    width:34px;height:34px;border:0;background:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);opacity:.55;transition:opacity .2s;
+  }
+  .icon-btn:hover{opacity:1}
+  .icon-btn svg{width:16px;height:16px}
+  .brand{
+    font-size:13px;letter-spacing:.42em;font-weight:400;margin:0;
+    padding-left:.42em;
+  }
+
+  /* CONTENT */
+  .content{
+    flex:1 1 auto;
+    display:flex;flex-direction:column;align-items:center;
+    padding: 80px 28px 24px;
+    text-align:center;
+    position:relative;
+  }
+  .meta{
+    font-size:11px;letter-spacing:.34em;color:var(--muted);
+    text-transform:uppercase;padding-left:.34em;
+    min-height:14px;margin-bottom:6px;
+    transition:color .4s;
+  }
+  .phase{
+    font-size:13px;letter-spacing:.5em;color:var(--ink);
+    text-transform:uppercase;padding-left:.5em;
+    min-height:18px;
+    transition:opacity .4s;
+  }
+
+  /* VISUALIZATION */
+  .viz{
+    flex:1 1 auto;
+    width:100%;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    margin: 14px 0 6px;
+  }
+  .viz-inner{
+    position:relative;
+    width:min(82%, 360px);
+    aspect-ratio:1;
+  }
+
+  /* Background aurora wash */
+  .aurora{
+    position:absolute;inset:-8%;border-radius:50%;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(0,0,0,.04) 0%, rgba(0,0,0,0) 60%);
+    filter: blur(8px);
+    transform: scale(var(--aurora-s,1));
+    transition: transform var(--aurora-d, 4s) cubic-bezier(.4,0,.2,1);
+  }
+
+  /* Concentric rings */
+  .ring{
+    position:absolute;inset:0;border-radius:50%;
+    border:1px solid rgba(0,0,0,.06);
+    transform: scale(var(--ring-s, 1));
+    transition: transform var(--ring-d, 4s) cubic-bezier(.4,0,.2,1),
+                opacity .8s, border-color .8s;
+    pointer-events:none;
+  }
+  .ring.r1{ inset: 8%; --ring-s: var(--s1, .55); }
+  .ring.r2{ inset: 0%; --ring-s: var(--s2, .70); border-color: rgba(0,0,0,.05); }
+  .ring.r3{ inset: -8%; --ring-s: var(--s3, .85); border-color: rgba(0,0,0,.04); }
+  .ring.r4{ inset: -16%; --ring-s: var(--s4, 1.0); border-color: rgba(0,0,0,.03); }
+  .ring.r5{ inset: -24%; --ring-s: var(--s5, 1.15); border-color: rgba(0,0,0,.02); }
+
+  /* Soft halo pulses (multiple) */
+  .halo{
+    position:absolute;inset:14%;border-radius:50%;
+    background: radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,255,255,0) 65%);
+    transform: scale(var(--halo-s, .9));
+    transition: transform var(--halo-d, 4s) cubic-bezier(.4,0,.2,1);
+    pointer-events:none;
+    filter: blur(6px);
+  }
+
+  /* Coloured glow that sits behind the white orb (rendered before .core
+     in the DOM so .core paints over it). Bleeds out around the orb as a
+     soft halo. The colour comes from --glow-* variables on body[data-glow]. */
+  .orb-back-glow{
+    position:absolute;
+    inset:-12%;
+    border-radius:50%;
+    pointer-events:none;
+    background:
+      radial-gradient(circle,
+        rgba(var(--glow-deep, 255, 90, 155), 0.65) 0%,
+        rgba(var(--glow-mid,  255, 120, 175), 0.42) 28%,
+        rgba(var(--glow-soft, 255, 160, 200), 0.18) 52%,
+        rgba(var(--glow-fade, 255, 220, 230), 0.00) 78%);
+    filter: blur(18px);
+    opacity:0;
+    transform: scale(.85);
+    transition: opacity 4s cubic-bezier(.4,0,.2,1),
+                transform 4s cubic-bezier(.4,0,.2,1);
+    will-change: opacity, transform;
+  }
+  .card[data-phase="inhale"]    .orb-back-glow{ opacity:1.0; transform: scale(1.15); transition-duration: var(--inhale, 4s); }
+  .card[data-phase="exhale"]    .orb-back-glow{ opacity:0.0; transform: scale(.85);  transition-duration: var(--exhale, 6s); }
+  .card[data-phase="hold-full"] .orb-back-glow{ opacity:1.0; transform: scale(1.15); transition-duration:1.2s; }
+  .card[data-phase="hold-empty"].orb-back-glow{ opacity:.30; transform: scale(.95);  transition-duration:1.2s; }
+  .card[data-phase="idle"]      .orb-back-glow{ opacity:.18; transform: scale(.90);  transition-duration:1.5s; }
+
+  /* Core orb */
+  .core{
+    position:absolute;inset:24%;border-radius:50%;
+    background:
+      radial-gradient(circle at 36% 30%,
+        #ffffff 0%,
+        #f6f6f6 35%,
+        #e6e6e6 70%,
+        #cfcfcf 100%);
+    box-shadow:
+      inset -14px -22px 40px rgba(0,0,0,.10),
+      inset 10px 14px 28px rgba(255,255,255,.95),
+      0 30px 50px -22px rgba(0,0,0,.22);
+    transform: scale(var(--core-s, .85));
+    transition: transform var(--core-d, 4s) cubic-bezier(.4,0,.2,1),
+                box-shadow .8s;
+  }
+  .core::after{
+    /* tiny highlight */
+    content:'';
+    position:absolute;
+    top:18%;left:24%;width:24%;height:18%;
+    background: radial-gradient(ellipse, rgba(255,255,255,.9), rgba(255,255,255,0) 70%);
+    border-radius:50%;
+    filter: blur(4px);
+  }
+
+  /* Particles */
+  .particles{
+    position:absolute;inset:-30%;border-radius:50%;
+    pointer-events:none;
+    transform: scale(var(--p-s, 1));
+    transition: transform var(--p-d, 4s) cubic-bezier(.4,0,.2,1);
+  }
+  .particles span{
+    position:absolute;width:4px;height:4px;border-radius:50%;
+    background: rgba(0,0,0,.25);
+    transform: translate(-50%,-50%);
+  }
+
+  /* Phase variations */
+  .card[data-phase="inhale"]{
+    --s1:.92; --s2:1.05; --s3:1.15; --s4:1.22; --s5:1.28;
+    --core-s:1.05; --halo-s:1.2; --aurora-s:1.15; --p-s:1.1;
+    --ring-d: var(--inhale); --core-d: var(--inhale); --halo-d: var(--inhale); --aurora-d: var(--inhale); --p-d: var(--inhale);
+  }
+  .card[data-phase="exhale"]{
+    --s1:.55; --s2:.65; --s3:.75; --s4:.82; --s5:.88;
+    --core-s:.72; --halo-s:.65; --aurora-s:.85; --p-s:.85;
+    --ring-d: var(--exhale); --core-d: var(--exhale); --halo-d: var(--exhale); --aurora-d: var(--exhale); --p-d: var(--exhale);
+  }
+  .card[data-phase="hold-full"]{
+    --s1:.92; --s2:1.05; --s3:1.15; --s4:1.22; --s5:1.28;
+    --core-s:1.05; --halo-s:1.2; --aurora-s:1.15; --p-s:1.1;
+  }
+  .card[data-phase="hold-empty"]{
+    --s1:.55; --s2:.65; --s3:.75; --s4:.82; --s5:.88;
+    --core-s:.72; --halo-s:.65; --aurora-s:.85; --p-s:.85;
+  }
+  .card[data-phase="idle"]{
+    --core-s:.82; --halo-s:.85; --aurora-s:1; --p-s:1;
+    --s1:.7; --s2:.8; --s3:.9; --s4:1; --s5:1.1;
+  }
+  .card[data-phase="idle"] .core{
+    animation: idle-pulse 6s ease-in-out infinite;
+  }
+  /* Explicitly cancel the idle keyframe in active phases — some browsers
+     don't transition cleanly when an animation is "removed" by selector
+     specificity alone. */
+  .card:not([data-phase="idle"]) .core{
+    animation: none !important;
+  }
+  @keyframes idle-pulse{
+    0%,100%{ transform: scale(.82); }
+    50%{ transform: scale(.92); }
+  }
+  .card[data-phase="paused"] .core,
+  .card[data-phase="paused"] .ring,
+  .card[data-phase="paused"] .halo{
+    transition: none;
+  }
+
+  /* CONTROLS */
+  .controls{
+    flex:0 0 auto;
+    display:flex;flex-direction:column;align-items:center;gap:18px;
+    padding: 8px 28px 32px;
+    position:relative;
+    z-index:2;
+  }
+  .progress-wrap{
+    width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;
+  }
+  .bar{
+    width:140px;height:2px;background:var(--soft);border-radius:2px;overflow:hidden;
+  }
+  .bar > i{display:block;height:100%;width:0;background:var(--ink);transition:width .4s ease}
+  .count{
+    font-size:10px;letter-spacing:.32em;color:var(--muted);
+    text-transform:uppercase;padding-left:.32em;min-height:12px;
+  }
+
+  /* Discrete "tap to start" hint sitting on the orb itself */
+  .orb-hint{
+    position:absolute;
+    inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:9px;letter-spacing:.55em;
+    color:var(--ink);text-transform:uppercase;
+    padding-left:.55em;
+    pointer-events:none;text-align:center;
+    opacity:0;transition:opacity .5s ease;
+    z-index:3;
+  }
+  .card[data-phase="idle"] .orb-hint{ animation: hint-breath 3.2s ease-in-out infinite; }
+  @keyframes hint-breath{
+    0%,100%{ opacity:.45 }
+    50%{ opacity:.75 }
+  }
+
+  /* Big breath count on the orb during breathing — also used for the
+     live seconds during the hold-empty / hold-full phases. */
+  .orb-count{
+    position:absolute;
+    inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size: 56px;
+    font-weight: 200;
+    color: var(--ink);
+    opacity:0;
+    pointer-events:none;
+    z-index:3;
+    transition: opacity .35s ease;
+    line-height:1;
+    letter-spacing: .02em;
+  }
+  .card[data-phase="inhale"] .orb-count,
+  .card[data-phase="exhale"] .orb-count{ opacity:.55 }
+  .card[data-phase="hold-empty"] .orb-count,
+  .card[data-phase="hold-full"] .orb-count{ opacity:.85; font-size: 64px; font-weight:300 }
+  .orb-count .unit{ font-size: 22px; font-weight: 300; opacity:.55; margin-left: 4px; vertical-align: top; }
+
+  /* End-of-session results panel — sits on the orb area */
+  .stats{
+    position:absolute;
+    inset: 8% 8% 6% 8%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    z-index:4;
+    text-align:center;
+    color: var(--ink);
+    background: linear-gradient(to bottom, transparent 0%, var(--card) 30%, var(--card) 70%, transparent 100%);
+    padding: 18px 12px;
+  }
+  .stats[hidden]{display:none}
+  .stats-title{
+    font-size: 10px; letter-spacing: .42em; padding-left:.42em;
+    color: var(--muted); text-transform:uppercase; margin-bottom: 14px;
+  }
+  .stats-rows{
+    display:flex;flex-direction:column;gap:6px;
+    font-size: 14px;font-weight: 300;
+    margin-bottom: 10px;
+  }
+  .stats-row{
+    display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+    min-width: 160px;
+  }
+  .stats-row .lbl{ font-size: 10px; letter-spacing: .32em; color: var(--muted); text-transform:uppercase; padding-left:.32em }
+  .stats-row .val{ font-variant-numeric: tabular-nums; font-weight:300; }
+  .stats-best{
+    margin-top: 8px; font-size: 11px; letter-spacing:.32em; padding-left:.32em;
+    color: var(--ink); text-transform:uppercase;
+  }
+  .stats-best .v{ font-size: 22px; letter-spacing: 0; padding-left: .3em; font-weight: 300; }
+  .stats-congrats{
+    margin-top: 14px; font-size: 11px; letter-spacing:.32em; padding-left:.32em;
+    color: var(--muted); text-transform:uppercase;
+  }
+
+  /* Prominent "TAP TO BREATHE" affordance during the hold */
+  .breathe-prompt{
+    position:absolute;
+    left:0;right:0;
+    bottom: 14%;
+    text-align:center;
+    font-size: 13px;
+    letter-spacing: .42em;
+    color: var(--ink);
+    text-transform:uppercase;
+    padding-left: .42em;
+    opacity: 0;
+    transition: opacity .4s ease;
+    pointer-events:none;
+    z-index:3;
+  }
+  .card[data-tap-prompt="true"] .breathe-prompt{
+    opacity: 1;
+    animation: breathe-prompt-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes breathe-prompt-pulse{
+    0%,100%{ transform: scale(1); opacity:.85 }
+    50%    { transform: scale(1.06); opacity:1 }
+  }
+
+  .button-row{
+    display:flex;align-items:center;justify-content:center;gap:18px;
+    width:100%;
+  }
+
+  /* Birds volume control — collapsed shows label + speaker; tap the speaker
+     to expand the track, then drag the speaker (which IS the thumb) along
+     the track to set volume. Auto-collapses after a few seconds of idle. */
+  .vol-control{
+    display: inline-flex; align-items: center; gap: 12px;
+    height: 50px;
+    transition: gap .25s ease;
+  }
+  .vol-text{
+    font-size: 9px;
+    letter-spacing: .36em;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding-left: .36em;
+    white-space: nowrap;
+    transition: opacity .25s ease, max-width .35s cubic-bezier(.4,0,.2,1), margin .25s ease;
+    overflow: hidden;
+    max-width: 120px;
+    opacity: .85;
+    pointer-events: none;
+  }
+  .vol-control.expanded .vol-text{
+    opacity: 0; max-width: 0; margin: 0;
+  }
+
+  .vol-track{
+    position: relative;
+    height: 50px;
+    width: 50px;            /* collapsed = just the thumb */
+    border-radius: 25px;
+    background: transparent;
+    border: 1px solid transparent;
+    flex: 0 0 auto;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: width .35s cubic-bezier(.4,0,.2,1),
+                background .25s ease,
+                border-color .25s ease;
+  }
+  .vol-control.expanded .vol-track{
+    width: 170px;
+    background: rgba(0,0,0,.05);
+    border-color: rgba(0,0,0,.10);
+  }
+  body[data-theme="dark"] .vol-control.expanded .vol-track{
+    background: rgba(255,255,255,.06);
+    border-color: rgba(255,255,255,.10);
+  }
+  .vol-track-fill{
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0;
+    background: rgba(0,0,0,.07);
+    border-radius: 25px;
+    pointer-events: none;
+    transition: width .15s ease, opacity .25s ease;
+    opacity: 0;
+  }
+  body[data-theme="dark"] .vol-track-fill{ background: rgba(255,255,255,.08); }
+  .vol-control.expanded .vol-track-fill{ opacity: 1; }
+
+  .vol-thumb{
+    position: absolute;
+    top: 50%;
+    left: 50%;                  /* collapsed: dead-center of 50px track */
+    transform: translate(-50%, -50%);
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 1px solid rgba(0,0,0,.12);
+    color: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: left .25s cubic-bezier(.4,0,.2,1), box-shadow .15s ease;
+    box-shadow: 0 4px 10px -4px rgba(0,0,0,.18);
+    z-index: 2;
+  }
+  .vol-control.expanded .vol-thumb{
+    left: var(--pos, 50%);
+    cursor: grab;
+  }
+  .vol-track.dragging .vol-thumb{
+    transition: none;
+    cursor: grabbing;
+    box-shadow: 0 6px 14px -4px rgba(0,0,0,.28);
+  }
+  .vol-thumb svg{ width:18px; height:18px; pointer-events: none; }
+  .vol-track.muted .vol-thumb{ opacity: .55; }
+  body[data-theme="dark"] .vol-thumb{ background: #2a2a2a; border-color: rgba(255,255,255,.18); color: var(--ink); }
+  .ctl{
+    width:54px;height:54px;border-radius:50%;
+    background:transparent;border:1px solid rgba(0,0,0,.12);
+    color:var(--ink);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition: all .2s;
+  }
+  .ctl:hover{background:rgba(0,0,0,.04)}
+  .ctl:active{transform:scale(.95)}
+  .ctl svg{width:18px;height:18px}
+  .ctl[hidden]{display:none}
+
+  .cta{
+    display:none !important;
+    width:80px;height:80px;border-radius:50%;
+    background:var(--ink);color:#fff;
+    border:0;cursor:pointer;
+    font-size:11px;letter-spacing:.32em;font-family:inherit;font-weight:400;
+    padding-left:.32em;
+    box-shadow:0 16px 30px -10px rgba(0,0,0,.45);
+    transition:transform .2s ease, opacity .2s, box-shadow .3s;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .cta:active{transform:scale(.96)}
+  .cta svg{width:20px;height:20px;fill:currentColor}
+  .cta[hidden]{display:none}
+
+  .hint{
+    font-size:10px;letter-spacing:.34em;color:var(--muted);
+    text-transform:uppercase;padding-left:.34em;
+    min-height:12px;text-align:center;
+  }
+
+  /* SETTINGS DRAWER */
+  .drawer{
+    position:absolute;inset:0;
+    background: #ffffff;
+    transform: translateY(100%);
+    transition: transform .35s cubic-bezier(.4,0,.2,1);
+    z-index:200;          /* above pink-glow */
+    display:flex;flex-direction:column;
+    padding: 32px 22px 24px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  @media (min-width: 420px){
+    .drawer{padding: 32px 30px 24px}
+  }
+  /* Hide the pink while the drawer is open so settings stay readable */
+  body[data-drawer="open"] .pink-glow{ opacity:0 !important; transition: opacity .25s ease !important; }
+  .drawer.open{transform: translateY(0)}
+  .drawer h2{
+    font-size:13px;letter-spacing:.42em;font-weight:400;margin:0 0 28px;
+    padding-left:.42em;text-align:center;
+  }
+  .drawer .group{
+    margin-bottom:22px;
+  }
+  .settings-note{
+    margin-top: 8px;
+    font-size: 10px;
+    line-height: 1.5;
+    letter-spacing: .04em;
+    color: var(--muted);
+    padding-left: 4px;
+  }
+  .settings-note.warn{ color: #b8841a; }
+  body[data-theme="dark"] .settings-note.warn{ color: #e6b75a; }
+  .enable-motion-btn{
+    margin-top: 10px;
+    width: 100%;
+    border: 1px solid rgba(0,0,0,.12);
+    background: var(--ink);
+    color: #fff;
+    border-radius: 26px;
+    padding: 12px 16px;
+    font-size: 10px;
+    letter-spacing: .32em;
+    text-transform: uppercase;
+    padding-left: .32em;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 400;
+    transition: opacity .2s;
+  }
+  .enable-motion-btn:active{ opacity: .8; }
+  body[data-theme="dark"] .enable-motion-btn{ background: #f0f0f0; color: #0b0b0b; border-color: rgba(255,255,255,.12); }
+
+  /* Live breathing indicator — vertical bar pinned to the right screen
+     edge, fills with chest amplitude over the last ~1.5s after subtracting
+     the gravity baseline. Visible only when motion is granted + tracking
+     active. */
+  .breath-meter{
+    position: fixed;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    width: 6px; height: 140px;
+    border-radius: 3px;
+    background: rgba(0,0,0,.06);
+    overflow: hidden;
+    display: none;
+    z-index: 60;
+  }
+  .breath-meter.live{ display: block; }
+  .breath-meter > i{
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 0%;
+    background: linear-gradient(to top, #6fa86f, #a3d2a3);
+    transition: height .15s cubic-bezier(.4,0,.2,1);
+  }
+  body[data-theme="dark"] .breath-meter{ background: rgba(255,255,255,.08); }
+  body[data-theme="dark"] .breath-meter > i{ background: linear-gradient(to top, #4a8a4a, #7eb87e); }
+
+  /* Brief toast — frosted-glass white pill, centered horizontally */
+  .toast{
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 22px);
+    left: 50%;
+    transform: translate(-50%, -8px);
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(18px) saturate(1.1);
+    -webkit-backdrop-filter: blur(18px) saturate(1.1);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    color: var(--ink);
+    padding: 14px 26px;
+    padding-left: calc(.24em + 26px);
+    border-radius: 28px;
+    font-size: 11px;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    z-index: 300;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease, transform .25s ease;
+    box-shadow: 0 12px 30px -8px rgba(0,0,0,.18), 0 2px 6px -2px rgba(0,0,0,.08);
+    max-width: calc(100vw - 32px);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .toast.show{ opacity: 1; transform: translate(-50%, 6px); }
+  body[data-theme="dark"] .toast{
+    background: rgba(30, 30, 30, 0.78);
+    border-color: rgba(255,255,255,0.10);
+    color: #f0f0f0;
+  }
+  .drawer .label-row{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:10px;
+  }
+  .drawer .label-row label{
+    font-size:10px;letter-spacing:.34em;color:var(--muted);
+    text-transform:uppercase;padding-left:.34em;
+  }
+  .drawer .value{
+    font-size:14px;letter-spacing:.18em;color:var(--ink);
+    padding-left:.18em;font-weight:400;
+  }
+  .stepper{
+    display:flex;align-items:center;justify-content:space-between;
+    border:1px solid rgba(0,0,0,.08);border-radius:30px;
+    padding:6px;
+  }
+  .stepper button{
+    width:38px;height:38px;border:0;background:none;cursor:pointer;
+    border-radius:50%;font-size:18px;font-weight:300;color:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    transition: background .2s;
+  }
+  .stepper button:hover{background:rgba(0,0,0,.05)}
+  .stepper button:active{transform:scale(.92)}
+  .stepper .v{
+    font-size:14px;letter-spacing:.16em;padding-left:.16em;
+  }
+  .seg{
+    display:flex;border:1px solid rgba(0,0,0,.08);border-radius:30px;padding:5px;gap:4px;
+    align-items:stretch;justify-content:center;
+  }
+  .seg button{
+    flex:1;min-width:0;border:0;background:none;cursor:pointer;
+    padding:11px 8px;border-radius:30px;
+    font-size:10px;letter-spacing:.18em;color:var(--muted);
+    text-transform:uppercase;font-family:inherit;font-weight:400;
+    transition: all .2s;
+    white-space:nowrap;
+    text-align:center;
+    line-height:1;
+  }
+  .seg button.active{background:var(--ink);color:#fff}
+  .seg-grid{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:4px;border-radius:18px;padding:4px;
+  }
+  .seg-grid button{border-radius:14px;padding:10px 4px;font-size:9px;letter-spacing:.14em}
+  .seg-glow{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:6px;border-radius:18px;padding:4px;
+  }
+  .seg-glow button{border-radius:14px;padding:14px 4px;font-size:9px;letter-spacing:.14em;
+    position:relative;overflow:hidden;}
+  .seg-glow .swatch{
+    display:block;width:18px;height:18px;border-radius:50%;
+    margin:0 auto 6px;
+    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.7), transparent 60%),
+                rgba(var(--swatch, 255,90,155), 1);
+    box-shadow: 0 0 14px 2px rgba(var(--swatch, 255,90,155), .55);
+  }
+
+  .range{
+    width:100%;height:36px;-webkit-appearance:none;appearance:none;
+    background:transparent;cursor:pointer;
+  }
+  .range::-webkit-slider-runnable-track{
+    height:2px;background:var(--soft);border-radius:1px;
+  }
+  .range::-moz-range-track{
+    height:2px;background:var(--soft);border-radius:1px;
+  }
+  .range::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--ink);margin-top:-8px;cursor:pointer;
+  }
+  .range::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:var(--ink);border:0;cursor:pointer;
+  }
+
+  .drawer-footer{
+    margin-top:auto;
+    padding-top: 24px;
+    display:flex;justify-content:center;align-items:center;gap:12px;
+  }
+  .drawer-footer button{
+    border-radius:30px;padding:14px 0;cursor:pointer;
+    font-size:11px;letter-spacing:.32em;text-transform:uppercase;
+    padding-left:.32em;font-family:inherit;font-weight:400;
+    transition: all .2s;
+    flex: 1 1 0;
+    max-width: 160px;
+    text-align:center;
+  }
+  .drawer-footer .done{
+    background:var(--ink);color:#fff;border:0;
+  }
+  .drawer-footer .reset{
+    background:none;color:var(--muted);border:1px solid rgba(0,0,0,.08);
+  }
+
+  /* Subtle anti-flash on phase change */
+  .fade{transition:opacity .35s}
+</style>
+</head>
+<body>
+<div class="toast" id="toast" aria-live="polite"></div>
+<div class="breath-meter" id="breath-meter" aria-hidden="true"><i id="breath-meter-fill"></i></div>
+
+<!-- Welcome / intro screen — shown on first visit and on sign-out. Hidden
+     once the user logs in or chooses guest mode (seenIntro=true). -->
+<div class="intro" id="intro" hidden>
+  <div class="intro-bg" aria-hidden="true">
+    <div class="intro-leaves bg-back"></div>
+    <div class="intro-leaves bg-mid"></div>
+    <div class="intro-leaves bg-front"></div>
+    <div class="intro-veil"></div>
+  </div>
+  <div class="intro-card">
+    <h1 class="intro-brand">BREATHE</h1>
+    <p class="intro-tagline">A sanctuary for your breath.</p>
+    <p class="intro-copy">
+      Save your sessions, see your progress, and watch your breath grow stronger over time.
+    </p>
+
+    <div class="intro-actions">
+      <button class="intro-btn google" id="intro-google" type="button" hidden>
+        <svg viewBox="0 0 18 18" aria-hidden="true">
+          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+          <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
+      <button class="intro-btn email" id="intro-email" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="5" width="18" height="14" rx="2"/>
+          <path d="M3 7l9 6 9-6"/>
+        </svg>
+        <span>Continue with email</span>
+      </button>
+    </div>
+
+    <button class="intro-skip" id="intro-skip" type="button">SKIP — TRY AS GUEST</button>
+
+    <!-- Email magic-link form, revealed when "Continue with email" is tapped -->
+    <div class="email-form" id="email-form" hidden>
+      <input type="email" id="email-input" placeholder="you@email.com" autocomplete="email" inputmode="email" />
+      <button class="intro-btn email-send" id="email-send" type="button">Send magic link</button>
+      <div class="email-note" id="email-note"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Profile drawer — shown when the user taps the profile icon -->
+<div class="profile-drawer" id="profile-drawer" hidden>
+  <div class="profile-card">
+    <button class="profile-close icon-btn" id="profile-close" aria-label="Close" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 5l14 14M19 5L5 19"/></svg>
+    </button>
+    <h2 class="profile-name" id="profile-name">YOUR PROFILE</h2>
+    <p class="profile-email" id="profile-email"></p>
+
+    <div class="profile-stats">
+      <div class="profile-stat"><div class="lbl">SESSIONS</div><div class="val" id="ps-sessions">0</div></div>
+      <div class="profile-stat"><div class="lbl">MINUTES</div><div class="val" id="ps-minutes">0</div></div>
+      <div class="profile-stat"><div class="lbl">BEST HOLD</div><div class="val" id="ps-best">—</div></div>
+    </div>
+
+    <h3 class="profile-section">RECENT SESSIONS</h3>
+    <div class="profile-list" id="profile-list"></div>
+
+    <button class="profile-signout" id="profile-signout" type="button">SIGN OUT</button>
+  </div>
+</div>
+
+<div class="bg-scene" aria-hidden="true">
+  <div class="bg-leaves bg-back"></div>
+  <div class="bg-leaves bg-mid"></div>
+  <div class="bg-leaves bg-front"></div>
+  <div class="bg-veil"></div>
+</div>
+<div class="pink-glow" id="pink-glow"></div>
+<div class="stage">
+  <div class="card" id="card" data-phase="idle">
+
+    <div class="header">
+      <button class="icon-btn" id="reset" aria-label="Reset" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+      <h1 class="brand">BREATHE</h1>
+      <button class="icon-btn" id="open-profile" aria-label="Profile" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 21c0-4 4-7 8-7s8 3 8 7"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="open-settings" aria-label="Settings" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="2.5"/>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="content">
+      <div class="meta fade" id="meta">WIM HOF METHOD</div>
+      <div class="phase fade" id="phase"></div>
+
+      <div class="viz">
+        <div class="viz-inner" id="viz-inner">
+          <div class="aurora"></div>
+          <div class="ring r5"></div>
+          <div class="ring r4"></div>
+          <div class="ring r3"></div>
+          <div class="ring r2"></div>
+          <div class="ring r1"></div>
+          <div class="halo"></div>
+          <div class="orb-back-glow"></div>
+          <div class="core"></div>
+          <div class="particles" id="particles"></div>
+          <div class="orb-hint" id="orb-hint">TAP TO START</div>
+          <div class="orb-count" id="orb-count"></div>
+          <div class="breathe-prompt" id="breathe-prompt">TAP TO BREATHE</div>
+          <div class="stats" id="stats" hidden>
+            <div class="stats-title">YOUR HOLDS</div>
+            <div class="stats-rows" id="stats-rows"></div>
+            <div class="stats-best" id="stats-best"></div>
+            <div class="stats-congrats" id="stats-congrats"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint fade" id="hint">3 ROUNDS · 30 BREATHS</div>
+    </div>
+
+    <div class="controls">
+      <div class="progress-wrap">
+        <div class="bar"><i id="progress-bar"></i></div>
+        <div class="count fade" id="count"></div>
+      </div>
+
+      <div class="button-row">
+        <div class="vol-control" id="vol-control">
+          <span class="vol-text">BIRDS VOLUME</span>
+          <div class="vol-track" id="vol-track" role="slider" aria-label="Birds volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="40">
+            <div class="vol-track-fill" id="vol-track-fill"></div>
+            <button class="vol-thumb" id="vol-thumb" type="button" aria-label="Birds volume — tap to expand, drag to set, tap again to mute">
+              <svg id="sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M11 5l-5 4H3v6h3l5 4V5z"/>
+                <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" stroke-linecap="round"/>
+              </svg>
+              <svg id="sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none">
+                <path d="M11 5l-5 4H3v6h3l5 4V5z"/>
+                <path d="M22 9l-6 6M16 9l6 6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button class="cta" id="cta" type="button">
+          <span id="cta-text">START</span>
+        </button>
+
+        <button class="ctl" id="pause-btn" type="button" aria-label="Pause" hidden>
+          <svg id="pause-icon" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="7" y="6" width="3" height="12" rx="1"/>
+            <rect x="14" y="6" width="3" height="12" rx="1"/>
+          </svg>
+          <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- SETTINGS DRAWER -->
+    <div class="drawer" id="drawer">
+      <h2>SETTINGS</h2>
+
+      <div class="group">
+        <div class="label-row">
+          <label>ROUNDS</label>
+        </div>
+        <div class="stepper">
+          <button data-act="dec" data-key="rounds" type="button">−</button>
+          <span class="v" id="v-rounds">3</span>
+          <button data-act="inc" data-key="rounds" type="button">+</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label-row">
+          <label>BREATHS PER ROUND</label>
+        </div>
+        <div class="stepper">
+          <button data-act="dec" data-key="breaths" type="button">−</button>
+          <span class="v" id="v-breaths">30</span>
+          <button data-act="inc" data-key="breaths" type="button">+</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label-row">
+          <label>BREATH PACE</label>
+          <span class="value" id="v-pace">SLOW</span>
+        </div>
+        <div class="seg" id="seg-pace">
+          <button data-pace="fast" type="button">FAST</button>
+          <button data-pace="medium" type="button">MED</button>
+          <button data-pace="slow" class="active" type="button">SLOW</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label-row">
+          <label>VOICE GUIDE</label>
+        </div>
+        <div class="seg" id="seg-voice">
+          <button data-voice="on" class="active" type="button">ON</button>
+          <button data-voice="off" type="button">OFF</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label-row">
+          <label>THEME</label>
+        </div>
+        <div class="seg" id="seg-theme">
+          <button data-theme="light" class="active" type="button">LIGHT</button>
+          <button data-theme="dark" type="button">DARK</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label-row">
+          <label>CHEST TRACKING</label>
+          <span class="value" id="v-chest">—</span>
+        </div>
+        <div class="seg" id="seg-chest">
+          <button data-chest="on" class="active" type="button">ON</button>
+          <button data-chest="off" type="button">OFF</button>
+        </div>
+        <button class="enable-motion-btn" id="enable-motion-btn" type="button" hidden>ENABLE MOTION ACCESS</button>
+        <div class="settings-note" id="chest-note"></div>
+      </div>
+
+      <div class="group">
+        <div class="label-row">
+          <label>BIRDS</label>
+          <span class="value" id="v-ambient">ON</span>
+        </div>
+        <div class="seg" id="seg-ambient">
+          <button data-amb="none" type="button">OFF</button>
+          <button data-amb="birds" class="active" type="button">ON</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label-row">
+          <label>BIRDS VOLUME</label>
+          <span class="value" id="v-amb-vol">40%</span>
+        </div>
+        <input type="range" class="range" id="amb-vol" min="0" max="100" value="40" step="5" />
+      </div>
+
+
+      <div class="group">
+        <div class="label-row">
+          <label>EXHALE HOLD</label>
+        </div>
+        <div class="seg" id="seg-hold">
+          <button data-hold="tap" class="active" type="button">TAP</button>
+          <button data-hold="60" type="button">60s</button>
+          <button data-hold="90" type="button">90s</button>
+          <button data-hold="120" type="button">2m</button>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button class="reset" id="defaults" type="button">DEFAULTS</button>
+        <button class="done" id="close-settings" type="button">DONE</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+  /* ============ SUPABASE ============ */
+  const SUPABASE_URL = 'https://vzblkuvxaydvblrmszkg.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_rJGPUMj_zGwTGToCudrOrQ_OaNW_0Me';
+  let sb = null;
+  let currentUser = null;
+  try {
+    if(window.supabase && typeof window.supabase.createClient === 'function'){
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      });
+    }
+  } catch(e){
+    try { console.warn('supabase init failed', e); } catch(_){}
+  }
+  /* ============ STATE ============ */
+  // Wim Hof method is a brisk full-belly inhale and a relaxed passive exhale.
+  // For a meditation feel we default to a smoother, longer pace.
+  const PACES = {
+    fast:   { in: 1500, out: 1800, label:'WHM POWER' },
+    medium: { in: 2200, out: 2800, label:'WIM HOF' },
+    slow:   { in: 3800, out: 5000, label:'MEDITATION' }
+  };
+
+  const cfg = loadConfig();
+
+  function loadConfig(){
+    const saved = JSON.parse(localStorage.getItem('breathe-cfg') || 'null');
+    const defaults = {
+      rounds: 3,
+      breaths: 30,
+      pace: 'medium',        // WIM HOF — the textbook brisk pace
+      hold: 'tap',           // tap | seconds (60/90/120)
+      inhaleHold: 15,
+      sound: true,
+      voice: true,
+      ambient: 'birds',      // birds | none
+      ambientVol: 0.4,
+      glow: 'forest',        // rose | amber | ocean | forest — forest by default
+      theme: 'light',        // light | dark
+      chestTracking: true    // measure breathing via accelerometer when phone is on chest
+    };
+    const cfg = Object.assign({}, defaults, saved || {});
+    // The Wim Hof inhale hold is fixed at 15s (his textbook recommendation)
+    cfg.inhaleHold = 15;
+    // Single sage-green glow now — no per-user choice
+    cfg.glow = 'forest';
+    // One-time migration: force VOICE GUIDE and CHEST TRACKING on for users
+    // whose saved config had them off (likely from when the settings drawer
+    // was broken in earlier versions). After this runs once they can toggle
+    // freely from the drawer.
+    if(!cfg.cfgVersion || cfg.cfgVersion < 2){
+      cfg.voice = true;
+      cfg.chestTracking = true;
+      cfg.cfgVersion = 2;
+    }
+    return cfg;
+  }
+  function saveConfig(){
+    localStorage.setItem('breathe-cfg', JSON.stringify(cfg));
+  }
+
+  /* ============ DOM ============ */
+  const card = document.getElementById('card');
+  const cta = document.getElementById('cta');
+  const ctaText = document.getElementById('cta-text');
+  const phaseEl = document.getElementById('phase');
+  const meta = document.getElementById('meta');
+  const count = document.getElementById('count');
+  const hint = document.getElementById('hint');
+  const progressBar = document.getElementById('progress-bar');
+  const resetBtn = document.getElementById('reset');
+  const pauseBtn = document.getElementById('pause-btn');
+  const pauseIcon = document.getElementById('pause-icon');
+  const playIcon = document.getElementById('play-icon');
+  const soundBtn = document.getElementById('sound-btn');
+  const soundOn = document.getElementById('sound-on');
+  const soundOff = document.getElementById('sound-off');
+  const openSettings = document.getElementById('open-settings');
+  const closeSettings = document.getElementById('close-settings');
+  const drawer = document.getElementById('drawer');
+  const defaultsBtn = document.getElementById('defaults');
+  const particles = document.getElementById('particles');
+  const pinkGlow = document.getElementById('pink-glow');
+  const orbHint = document.getElementById('orb-hint');
+
+  /* ============ WAKE LOCK ============ */
+  let wakeLock = null;
+  async function requestWakeLock(){
+    try {
+      if('wakeLock' in navigator){
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener && wakeLock.addEventListener('release', () => {
+          // OS released it — nothing to do, will re-request on visibilitychange
+        });
+      }
+    } catch(e) { /* user denied or unavailable */ }
+  }
+  async function releaseWakeLock(){
+    if(wakeLock){
+      try { await wakeLock.release(); } catch(e){}
+      wakeLock = null;
+    }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible' && state && state.running) requestWakeLock();
+  });
+
+  /* ============ PARTICLES (orbiting dots) ============ */
+  function makeParticles(){
+    particles.innerHTML = '';
+    const count = 18;
+    for(let i=0;i<count;i++){
+      const s = document.createElement('span');
+      const a = (i/count)*Math.PI*2;
+      const r = 0.42 + Math.random()*0.06;
+      const x = 50 + Math.cos(a)*r*100;
+      const y = 50 + Math.sin(a)*r*100;
+      const size = 2 + Math.random()*3;
+      s.style.left = x+'%';
+      s.style.top = y+'%';
+      s.style.width = size+'px';
+      s.style.height = size+'px';
+      s.style.opacity = (0.15 + Math.random()*0.25).toString();
+      particles.appendChild(s);
+    }
+  }
+  makeParticles();
+
+  /* ============ AUDIO ============ */
+  let audioCtx = null;
+  let masterGain = null;
+  let convolver = null;
+
+  function ensureAudio(){
+    if(!audioCtx){
+      const C = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new C();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = cfg.sound ? 1 : 0;
+
+      // Simple reverb impulse
+      convolver = audioCtx.createConvolver();
+      convolver.buffer = makeReverbIR(audioCtx, 3.5, 2.5);
+
+      const wet = audioCtx.createGain();
+      wet.gain.value = 0.35;
+      const dry = audioCtx.createGain();
+      dry.gain.value = 0.85;
+
+      masterGain.connect(dry).connect(audioCtx.destination);
+      masterGain.connect(convolver).connect(wet).connect(audioCtx.destination);
+
+      // Voice channel — set up on the same user gesture as masterGain so
+      // iOS treats both as "unlocked" from the same activation.
+      voiceGain = audioCtx.createGain();
+      voiceGain.gain.value = 1.1;
+      voiceGain.connect(audioCtx.destination);
+
+      // iOS unlock: brief oscillator + silent buffer played during the user
+      // gesture. The oscillator triggers the audio hardware on iOS Safari
+      // so subsequent BufferSource.start() calls actually produce sound.
+      try {
+        const o = audioCtx.createOscillator();
+        const og = audioCtx.createGain();
+        og.gain.value = 0;
+        o.connect(og).connect(audioCtx.destination);
+        o.start(0);
+        o.stop(audioCtx.currentTime + 0.03);
+        const b = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+        const s = audioCtx.createBufferSource();
+        s.buffer = b;
+        s.connect(audioCtx.destination);
+        s.start(0);
+      } catch(e) { /* harmless */ }
+    }
+    if(audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  }
+
+
+  function makeReverbIR(ctx, duration, decay){
+    const rate = ctx.sampleRate;
+    const len = rate * duration;
+    const buf = ctx.createBuffer(2, len, rate);
+    for(let ch=0;ch<2;ch++){
+      const d = buf.getChannelData(ch);
+      for(let i=0;i<len;i++){
+        d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, decay);
+      }
+    }
+    return buf;
+  }
+
+  function setSoundEnabled(on){
+    cfg.sound = on;
+    saveConfig();
+    soundOn.style.display = on ? '' : 'none';
+    soundOff.style.display = on ? 'none' : '';
+    if(masterGain){
+      const t = audioCtx.currentTime;
+      masterGain.gain.cancelScheduledValues(t);
+      masterGain.gain.linearRampToValueAtTime(on ? 1 : 0, t + 0.2);
+    }
+  }
+
+  /* Breath sound: airy filtered noise + warm sine drone + gentle harmonic.
+     Inhale: filter sweeps up, pitch rises. Exhale: opposite, with a deeper body. */
+  let activeNodes = [];
+  function stopAllSound(){
+    const ctx = audioCtx; if(!ctx) return;
+    activeNodes.forEach(n => { try{ n.stop(ctx.currentTime + 0.05);}catch(e){} });
+    activeNodes = [];
+  }
+
+  /* Breath = pink/brown noise shaped by a moving bandpass + lowpass, with a
+     tiny sub-bass body for "power". Inhale is bright and rising (mouth opens),
+     exhale is warm and falling (relaxed release). No musical drone — keeps
+     it sounding like real breath, not a synth pad. */
+  function playBreath(kind, durationMs){
+    if(!cfg.sound) return;
+    const ctx = ensureAudio();
+    const now = ctx.currentTime;
+    const dur = durationMs/1000;
+
+    // Brown-ish noise (warmer than white)
+    const noiseLen = Math.ceil(ctx.sampleRate * dur);
+    const buf = ctx.createBuffer(1, noiseLen, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    let last = 0;
+    for(let i=0;i<noiseLen;i++){
+      const w = (Math.random()*2-1) * 0.5;
+      last = (last + 0.02*w) / 1.02;
+      data[i] = last * 3.5;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+
+    // Bandpass for the airy "shhh / haa" body
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.Q.value = 0.55;
+    // Lowpass tames brightness so it doesn't hiss
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.Q.value = 0.7;
+
+    if(kind === 'inhale'){
+      // Inhale: dark → bright as lungs fill
+      bp.frequency.setValueAtTime(380, now);
+      bp.frequency.exponentialRampToValueAtTime(1500, now + dur*0.92);
+      lp.frequency.setValueAtTime(900, now);
+      lp.frequency.exponentialRampToValueAtTime(2400, now + dur*0.92);
+    } else {
+      // Exhale: bright → dark, warmer release
+      bp.frequency.setValueAtTime(1200, now);
+      bp.frequency.exponentialRampToValueAtTime(260, now + dur*0.92);
+      lp.frequency.setValueAtTime(2200, now);
+      lp.frequency.exponentialRampToValueAtTime(700, now + dur*0.92);
+    }
+
+    // Smooth ASR envelope shaped like real breath
+    const g = ctx.createGain();
+    const peak = kind === 'inhale' ? 0.30 : 0.36;
+    const attack = dur * (kind === 'inhale' ? 0.18 : 0.28);
+    const release = dur * (kind === 'inhale' ? 0.30 : 0.40);
+    const sustainStart = attack;
+    const sustainEnd = dur - release;
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(peak, now + sustainStart);
+    g.gain.setValueAtTime(peak, now + sustainEnd);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+    noise.connect(bp).connect(lp).connect(g).connect(masterGain);
+    noise.start(now);
+    noise.stop(now + dur + 0.05);
+    activeNodes.push(noise);
+
+    // Tiny sub-bass body — felt more than heard, gives breath "weight"
+    const sub = ctx.createOscillator();
+    sub.type = 'sine';
+    if(kind === 'inhale'){
+      sub.frequency.setValueAtTime(55, now);
+      sub.frequency.linearRampToValueAtTime(85, now + dur);
+    } else {
+      sub.frequency.setValueAtTime(70, now);
+      sub.frequency.linearRampToValueAtTime(45, now + dur);
+    }
+    const subG = ctx.createGain();
+    subG.gain.setValueAtTime(0.0001, now);
+    subG.gain.exponentialRampToValueAtTime(0.06, now + dur*0.45);
+    subG.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    sub.connect(subG).connect(masterGain);
+    sub.start(now);
+    sub.stop(now + dur + 0.05);
+    activeNodes.push(sub);
+  }
+
+  /* ===== VOICE — ElevenLabs only. Minimal cues so Noemi is felt, not crowded.
+     During the actual breathing rounds, only the breath sound plays — no
+     voice on every inhale/exhale. Voice is reserved for arrivals, holds,
+     and round/session transitions. */
+  const WELCOME =
+    "Welcome to your breath sanctuary. I will be your guide. " +
+    "Find a comfortable position, soften your shoulders. " +
+    "When you are ready, tap to begin.";
+
+  const WELCOME_WITH_CHEST =
+    "Welcome to your breath sanctuary. I will be your guide. " +
+    "Place the phone gently on your chest, soften your shoulders, " +
+    "and when you are ready, tap to begin.";
+
+  const PREPARE_HOLD = "Prepare to hold your breath after this last exhale.";
+
+  /* Soothing lines — stillness, the breath hold itself, cell nourishment,
+     and clever / inspirational. NO references to breaths between breaths. */
+  const SOOTHING_HOLD = [
+    "Stillness is the language of your body.",
+    "Become the silence between thoughts.",
+    "This pause is medicine.",
+    "Each moment of holding is a gift.",
+    "The hold transforms you from within.",
+    "Every cell is awakening, renewing.",
+    "Your cells are dancing with energy.",
+    "Oxygen feeds every fiber of your being.",
+    "Your body is healing in this moment.",
+    "Each cell drinks in this calm.",
+    "You are stronger than you think.",
+    "Discomfort is the doorway to mastery.",
+    "What you practice, you become.",
+    "Your edge is where growth lives.",
+    "You are rewiring yourself, breath by breath.",
+    "Beneath the noise, there is you.",
+    "You are the calm in your own storm.",
+    "The body remembers everything you give it.",
+    "Stay. You are exactly where strength lives.",
+    "Stillness is power. Stillness is presence.",
+    "The deepest peace lives inside the stillness.",
+    "You are exactly where you need to be."
+  ];
+  const SOOTHING_INHALE_HOLD = [
+    "Hold the strength.",
+    "Rooted and powerful.",
+    "Steady. Strong. Whole."
+  ];
+
+  const ROUND_RELEASE = i => `Release. Round ${['','one','two','three','four','five','six','seven','eight'][i] || i} complete.`;
+
+  const BREATH_NUDGES_PRELOAD = [
+    "Breathe deeper. Open your chest fully.",
+    "Bigger breaths next round. Belly first.",
+    "Match the rise and fall of the orb.",
+    "Fill your lungs. Trust the rhythm.",
+    "Make sure the phone is resting on your chest.",
+    "Place the phone gently on your chest, just below the collarbone.",
+    "I cannot feel your breath. Position the phone on your chest.",
+    "Stay with the breath.",
+    "Keep breathing with me.",
+    "Don't drift. Match the orb.",
+    "Inhale, then let it go. With me.",
+    "Breathe. I am right here with you."
+  ];
+
+  const VOICE_PHRASES = [
+    WELCOME,
+    WELCOME_WITH_CHEST,
+    PREPARE_HOLD,
+    'Hold your breath',
+    'Take a deep breath in and hold',
+    ROUND_RELEASE(1), ROUND_RELEASE(2), ROUND_RELEASE(3),
+    ROUND_RELEASE(4), ROUND_RELEASE(5), ROUND_RELEASE(6),
+    ROUND_RELEASE(7), ROUND_RELEASE(8),
+    'Session complete. Well done.',
+    ...SOOTHING_HOLD,
+    ...SOOTHING_INHALE_HOLD,
+    ...BREATH_NUDGES_PRELOAD
+  ];
+
+  let elevenAvailable = null; // null = unknown, true/false = probed
+  const audioBufferCache = new Map(); // text -> AudioBuffer | null | Promise
+  let currentVoiceSource = null;      // currently-playing BufferSourceNode
+  let currentVoiceResolve = null;     // resolver for the active speak() promise
+  let voiceGain = null;               // dedicated gain so voice can be ducked / stopped
+  let runtimeVoiceId = null;
+
+  async function loadRuntimeConfig(){
+    try {
+      const r = await fetch('/api/config', { cache: 'no-store' });
+      if(r.ok){
+        const j = await r.json();
+        if(j.voice && j.voice !== runtimeVoiceId){
+          audioBufferCache.clear();
+        }
+        runtimeVoiceId = j.voice || null;
+        if(j.hasVoiceApi === false) elevenAvailable = false;
+      }
+    } catch(e) { /* ignore — fall back to system voice */ }
+  }
+
+  // Pick a fallback Web Speech voice
+  let chosenVoice = null;
+  function pickVoice(){
+    if(!('speechSynthesis' in window)) return;
+    const voices = speechSynthesis.getVoices();
+    if(!voices.length) return;
+    const prefer = [/samantha/i, /karen/i, /moira/i, /tessa/i, /serena/i, /ava/i, /allison/i, /female/i];
+    for(const re of prefer){
+      const v = voices.find(v => re.test(v.name) && /^en/i.test(v.lang));
+      if(v){ chosenVoice = v; return; }
+    }
+    chosenVoice = voices.find(v => /^en/i.test(v.lang)) || voices[0];
+  }
+  if('speechSynthesis' in window){
+    pickVoice();
+    if(speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged', pickVoice);
+  }
+
+  async function fetchVoiceClip(text){
+    if(audioBufferCache.has(text)) {
+      const v = audioBufferCache.get(text);
+      return v && v.then ? await v : v;
+    }
+    const p = (async () => {
+      try {
+        // Voice version is bumped whenever ElevenLabs voice_settings change
+        // server-side so the browser cache picks up the new audio.
+        const VOICE_VERSION = 'v3';
+        const v = (runtimeVoiceId ? '&voice=' + encodeURIComponent(runtimeVoiceId) : '') +
+                  '&ver=' + VOICE_VERSION;
+        const r = await fetch('/api/voice?text=' + encodeURIComponent(text) + v);
+        if(!r.ok){
+          if(r.status === 503) elevenAvailable = false;
+          audioBufferCache.set(text, null);
+          return null;
+        }
+        const arr = await r.arrayBuffer();
+        const ctx = ensureAudio();
+        // Some Safari versions still require the callback form
+        const buf = await new Promise((resolve, reject) => {
+          try {
+            const p2 = ctx.decodeAudioData(arr.slice(0), resolve, reject);
+            if(p2 && p2.then) p2.then(resolve, reject);
+          } catch(e){ reject(e); }
+        });
+        audioBufferCache.set(text, buf);
+        elevenAvailable = true;
+        return buf;
+      } catch(e) {
+        try { console.warn('voice fetch/decode failed for', text, e); } catch(_){}
+        audioBufferCache.set(text, null);
+        return null;
+      }
+    })();
+    audioBufferCache.set(text, p);
+    return p;
+  }
+
+  async function preloadVoice(){
+    if(!cfg.voice) return;
+    if(elevenAvailable === false) return;
+    // Stagger so we don't hit ElevenLabs' concurrent-request limit
+    // (free/creator tiers cap at 2-5 in flight). 100ms gap is enough
+    // to keep at most a few in flight while still being fast.
+    for(const t of VOICE_PHRASES){
+      fetchVoiceClip(t);
+      await new Promise(r => setTimeout(r, 100));
+    }
+  }
+
+  function stopVoice(){
+    // Resolve any pending speak() so awaiters (like the welcome) don't hang
+    if(currentVoiceResolve){
+      const r = currentVoiceResolve;
+      currentVoiceResolve = null;
+      try { r(); } catch(e){}
+    }
+    if(currentVoiceSource){
+      const s = currentVoiceSource;
+      currentVoiceSource = null;
+      try { s.onended = null; s.stop(0); } catch(e){}
+      try { s.disconnect(); } catch(e){}
+    }
+    if('speechSynthesis' in window) speechSynthesis.cancel();
+  }
+
+  async function speak(text, opts = {}){
+    if(!cfg.voice) return;
+    stopVoice();
+
+    // Try ElevenLabs via Web Audio (much more reliable on iOS than HTMLAudioElement)
+    if(elevenAvailable !== false){
+      const ctx = ensureAudio();
+      // Some Safari builds need an explicit resume() right before scheduled play
+      if(ctx.state === 'suspended'){
+        try { await ctx.resume(); } catch(e){}
+      }
+      // Bound the fetch so a slow network can't strand the welcome forever
+      const buf = await Promise.race([
+        fetchVoiceClip(text),
+        new Promise(res => setTimeout(() => res(null), 8000))
+      ]);
+      if(buf){
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        const rate = opts.rate ?? 0.94;
+        src.playbackRate.value = rate;
+        const g = ctx.createGain();
+        g.gain.value = opts.volume ?? 1.0;
+        src.connect(g).connect(voiceGain);
+        currentVoiceSource = src;
+
+        // Estimated end time, used as a hard safety timeout if onended never fires
+        const expectedMs = (buf.duration / Math.max(0.5, rate)) * 1000 + 600;
+
+        return new Promise(res => {
+          currentVoiceResolve = res;
+          let done = false;
+          const finish = () => {
+            if(done) return;
+            done = true;
+            if(currentVoiceResolve === res) currentVoiceResolve = null;
+            try{ src.disconnect(); g.disconnect(); }catch(e){};
+            res();
+          };
+          src.onended = finish;
+          setTimeout(finish, expectedMs);
+          try {
+            // Schedule a hair in the future — Safari occasionally drops a
+            // playback that's scheduled at exactly currentTime.
+            src.start(ctx.currentTime + 0.02);
+          } catch(e){
+            finish();
+          }
+        });
+      }
+    }
+    // No system-voice fallback — only Noemi. If ElevenLabs failed, stay silent.
+    return;
+  }
+
+  /* ============ CHEST TRACKING (accelerometer breath sensing) ============
+     iOS Safari requires DeviceMotionEvent.requestPermission() called from a
+     user gesture. We fire it synchronously during start() and listen for
+     devicemotion samples. After the session we high-pass filter the z-axis
+     to remove gravity / posture drift, find peaks (inhale tops), and derive
+     breaths-per-minute, amplitude, and rhythm consistency. Passive only —
+     no live overlay during the round itself. */
+  let motionPermission = null;
+  let chestSamples = [];
+  let chestStartTs = 0;
+  let chestActive = false;
+
+  let __toastTimer = null;
+  function showToast(msg, ms){
+    const el = document.getElementById('toast');
+    if(!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    if(__toastTimer) clearTimeout(__toastTimer);
+    __toastTimer = setTimeout(() => el.classList.remove('show'), ms || 2400);
+  }
+
+  function tryRequestMotionPermission(){
+    if(!cfg.chestTracking) return;
+    if(typeof DeviceMotionEvent === 'undefined'){
+      motionPermission = 'unsupported';
+      renderChestStatus();
+      return;
+    }
+    if(typeof DeviceMotionEvent.requestPermission !== 'function'){
+      // Android / desktop — granted by default
+      motionPermission = 'granted';
+      renderChestStatus();
+      return;
+    }
+    // iOS 12.2+ — must be invoked from user gesture; START tap covers this
+    DeviceMotionEvent.requestPermission().then(res => {
+      const prev = motionPermission;
+      motionPermission = (res === 'granted') ? 'granted' : 'denied';
+      if(motionPermission === 'granted' && chestActive) attachMotionListener();
+      renderChestStatus();
+      if(motionPermission !== prev){
+        showToast(motionPermission === 'granted' ? 'Motion access granted' : 'Motion access denied');
+      }
+    }).catch(() => {
+      motionPermission = 'denied';
+      renderChestStatus();
+      showToast('Motion access denied');
+    });
+  }
+  function renderChestStatus(){
+    const v = document.getElementById('v-chest');
+    const note = document.getElementById('chest-note');
+    const enableBtn = document.getElementById('enable-motion-btn');
+    if(!v || !note) return;
+    if(!cfg.chestTracking){
+      v.textContent = 'OFF'; note.textContent = ''; note.className = 'settings-note';
+      if(enableBtn) enableBtn.hidden = true;
+      return;
+    }
+    if(motionPermission === 'granted'){
+      v.textContent = 'GRANTED'; note.textContent = 'Motion access granted. Place the phone on your chest during the session.'; note.className = 'settings-note';
+      if(enableBtn) enableBtn.hidden = true;
+    } else if(motionPermission === 'denied'){
+      v.textContent = 'DENIED';
+      note.textContent = 'iPhone → Settings → Safari → Motion & Orientation Access (turn on), then reload this page and try again.';
+      note.className = 'settings-note warn';
+      if(enableBtn) enableBtn.hidden = true;
+    } else if(motionPermission === 'unsupported'){
+      v.textContent = 'NOT AVAILABLE'; note.textContent = 'This device doesn’t expose motion data to the browser.'; note.className = 'settings-note warn';
+      if(enableBtn) enableBtn.hidden = true;
+    } else {
+      v.textContent = 'NEEDS ACCESS';
+      note.textContent = 'Tap the button below to grant motion access.';
+      note.className = 'settings-note warn';
+      if(enableBtn) enableBtn.hidden = false;
+    }
+  }
+  // Manual permission retry — fires requestPermission from its own click,
+  // guaranteeing a fresh user-activation independent of START.
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('enable-motion-btn');
+    if(!btn) return;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if(typeof DeviceMotionEvent === 'undefined' ||
+         typeof DeviceMotionEvent.requestPermission !== 'function'){
+        motionPermission = 'unsupported';
+        renderChestStatus();
+        return;
+      }
+      DeviceMotionEvent.requestPermission().then(res => {
+        motionPermission = (res === 'granted') ? 'granted' : 'denied';
+        if(motionPermission === 'granted' && chestActive) attachMotionListener();
+        renderChestStatus();
+      }).catch(() => {
+        motionPermission = 'denied';
+        renderChestStatus();
+      });
+    });
+  });
+  // In case DOMContentLoaded already fired, attach immediately too:
+  setTimeout(() => {
+    const btn = document.getElementById('enable-motion-btn');
+    if(btn && !btn.__bound){
+      btn.__bound = true;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if(typeof DeviceMotionEvent === 'undefined' ||
+           typeof DeviceMotionEvent.requestPermission !== 'function'){
+          motionPermission = 'unsupported';
+          renderChestStatus();
+          return;
+        }
+        DeviceMotionEvent.requestPermission().then(res => {
+          motionPermission = (res === 'granted') ? 'granted' : 'denied';
+          if(motionPermission === 'granted' && chestActive) attachMotionListener();
+          renderChestStatus();
+        }).catch(() => {
+          motionPermission = 'denied';
+          renderChestStatus();
+        });
+      });
+    }
+  }, 0);
+
+  function onDeviceMotion(e){
+    const a = e.accelerationIncludingGravity;
+    if(!a) return;
+    const z = (typeof a.z === 'number') ? a.z : 0;
+    chestSamples.push({ t: performance.now() - chestStartTs, z });
+    updateBreathMeter();
+  }
+  // Live amplitude meter — subtract a 5s gravity baseline, then show the
+  // smoothed instantaneous deviation so the bar pulses with each inhale /
+  // exhale. Window kept tight so the bar reacts within a fraction of a
+  // breath cycle.
+  let __meterRaf = null;
+  function updateBreathMeter(){
+    if(__meterRaf) return;
+    __meterRaf = requestAnimationFrame(() => {
+      __meterRaf = null;
+      const meter = document.getElementById('breath-meter');
+      const fill  = document.getElementById('breath-meter-fill');
+      if(!meter || !fill) return;
+      const N = chestSamples.length;
+      if(N < 6){ fill.style.height = '0%'; return; }
+      const tNow = chestSamples[N-1].t;
+      // 5s baseline (gravity / posture). Anything common across the window
+      // gets subtracted away so only the breathing oscillation shows.
+      let bSum = 0, bCount = 0;
+      for(let i = N - 1; i >= 0; i--){
+        if(chestSamples[i].t < tNow - 5000) break;
+        bSum += chestSamples[i].z; bCount++;
+      }
+      const baseline = bCount ? bSum / bCount : 0;
+      // Average of last ~5 samples (smoothing) minus baseline = the AC piece
+      let smooth = 0, sCount = 0;
+      const tail = Math.max(0, N - 5);
+      for(let i = tail; i < N; i++){
+        smooth += (chestSamples[i].z - baseline); sCount++;
+      }
+      const ac = sCount ? smooth / sCount : 0;
+      // 0..0.25 g of deviation maps to 0..100% — sensitive enough that real
+      // chest movement clearly fills the bar.
+      const pct = Math.max(0, Math.min(100, (Math.abs(ac) / 0.25) * 100));
+      fill.style.height = pct + '%';
+    });
+  }
+  function showBreathMeter(on){
+    const m = document.getElementById('breath-meter');
+    if(!m) return;
+    if(on && motionPermission === 'granted') m.classList.add('live');
+    else m.classList.remove('live');
+  }
+  function attachMotionListener(){
+    window.addEventListener('devicemotion', onDeviceMotion);
+  }
+  function detachMotionListener(){
+    window.removeEventListener('devicemotion', onDeviceMotion);
+  }
+  function startChestTracking(){
+    if(!cfg.chestTracking) return;
+    chestSamples = [];
+    chestStartTs = performance.now();
+    chestActive = true;
+    if(motionPermission === 'granted'){
+      attachMotionListener();
+      showBreathMeter(true);
+    }
+  }
+  function stopChestTracking(){
+    chestActive = false;
+    detachMotionListener();
+    showBreathMeter(false);
+  }
+
+  /* Per-breath amplitude tracking — used to nudge the user gently if the
+     accelerometer signal says they aren't actually breathing along with
+     the guide. Records peak-to-peak Z over a sliding window. */
+  function currentBreathAmplitude(windowMs){
+    if(!chestActive || motionPermission !== 'granted') return null;
+    const t1 = performance.now() - chestStartTs;
+    const t0 = t1 - (windowMs || 4000);
+    let mx = -Infinity, mn = Infinity, n = 0;
+    for(let i = chestSamples.length - 1; i >= 0; i--){
+      const s = chestSamples[i];
+      if(s.t < t0) break;
+      if(s.z > mx) mx = s.z;
+      if(s.z < mn) mn = s.z;
+      n++;
+    }
+    if(n < 8) return null;
+    return mx - mn;
+  }
+  /* After the round completes, decide if a gentle nudge is warranted.
+     Returns one of:
+       null               — no opinion (motion not granted / not enough data)
+       { kind:'good',   amp }  — chest moving well
+       { kind:'shallow',amp }  — moving but small, ask for deeper breaths
+       { kind:'static', amp }  — basically no motion, phone likely off chest
+  */
+  function evalRoundBreathQuality(){
+    if(motionPermission !== 'granted') return null;
+    if(!chestSamples.length) return { kind: 'no-motion-events', amp: 0 };
+    const cycleMs = (PACES[cfg.pace].in + PACES[cfg.pace].out);
+    const tEnd = performance.now() - chestStartTs;
+    const tStart = Math.max(0, tEnd - cycleMs * cfg.breaths);
+    const win = chestSamples.filter(s => s.t >= tStart && s.t <= tEnd);
+    if(win.length < 30) return { kind: 'no-motion-events', amp: 0 };
+    let mx = -Infinity, mn = Infinity;
+    win.forEach(s => { if(s.z > mx) mx = s.z; if(s.z < mn) mn = s.z; });
+    const amp = mx - mn;
+    if(amp < 0.18) return { kind: 'static',  amp };   // phone likely on a surface
+    if(amp < 0.45) return { kind: 'shallow', amp };   // breathing but small
+    return { kind: 'good', amp };
+  }
+  // Curated nudges per kind — gentle, on-message
+  const NUDGES_SHALLOW = [
+    "Breathe deeper. Open your chest fully.",
+    "Bigger breaths next round. Belly first.",
+    "Match the rise and fall of the orb.",
+    "Fill your lungs. Trust the rhythm."
+  ];
+  const NUDGES_STATIC = [
+    "Make sure the phone is resting on your chest.",
+    "Place the phone gently on your chest, just below the collarbone.",
+    "I cannot feel your breath. Position the phone on your chest."
+  ];
+  // Mid-round live nudges — fired when the chest goes still WHILE the
+  // session is actively breathing, suggesting the user has zoned out.
+  const NUDGES_STILLNESS = [
+    "Stay with the breath.",
+    "Keep breathing with me.",
+    "Don't drift. Match the orb.",
+    "Inhale, then let it go. With me.",
+    "Breathe. I am right here with you."
+  ];
+  let lastNudge = null;
+  function analyseChestData(){
+    const N = chestSamples.length;
+    if(N < 60) return null;
+    // High-pass via rolling-mean subtraction (~1.5s window)
+    const mean = (i, win) => {
+      let s = 0, c = 0;
+      const lo = Math.max(0, i - win), hi = Math.min(N, i + win);
+      for(let j = lo; j < hi; j++){ s += chestSamples[j].z; c++; }
+      return s / c;
+    };
+    const window = 45;
+    const filt = new Array(N);
+    for(let i = 0; i < N; i++) filt[i] = chestSamples[i].z - mean(i, window);
+    // Light smoothing (3-tap moving avg)
+    const sm = new Array(N);
+    for(let i = 0; i < N; i++){
+      const a = filt[Math.max(0, i-1)], b = filt[i], c = filt[Math.min(N-1, i+1)];
+      sm[i] = (a + b + c) / 3;
+    }
+    // Peak detection — local maxima above a noise threshold + minimum spacing
+    const peaks = [];
+    const minSpacingMs = 1500; // breaths can't be faster than 40/min
+    let lastPeakT = -Infinity;
+    let amp = 0;
+    for(let i = 0; i < N; i++) amp = Math.max(amp, Math.abs(sm[i]));
+    const thresh = Math.max(0.05, amp * 0.3);
+    for(let i = 3; i < N - 3; i++){
+      const v = sm[i];
+      if(v < thresh) continue;
+      let isPeak = true;
+      for(let j = -3; j <= 3; j++){
+        if(j === 0) continue;
+        if(sm[i + j] >= v){ isPeak = false; break; }
+      }
+      if(!isPeak) continue;
+      const t = chestSamples[i].t;
+      if(t - lastPeakT < minSpacingMs) continue;
+      peaks.push({ i, t, v });
+      lastPeakT = t;
+    }
+    if(peaks.length < 2) return { peakCount: peaks.length, bpm: null, amplitude: amp, consistency: null };
+    const intervals = [];
+    for(let k = 1; k < peaks.length; k++) intervals.push(peaks[k].t - peaks[k-1].t);
+    const meanIv = intervals.reduce((a,b) => a+b, 0) / intervals.length;
+    const bpm = 60000 / meanIv;
+    // Consistency = 1 - normalised stddev (clamped 0..1)
+    const variance = intervals.reduce((a,b) => a + (b - meanIv) * (b - meanIv), 0) / intervals.length;
+    const sd = Math.sqrt(variance);
+    const consistency = Math.max(0, Math.min(1, 1 - (sd / Math.max(1, meanIv))));
+    return {
+      peakCount: peaks.length,
+      bpm: Math.round(bpm * 10) / 10,
+      amplitude: Math.round(amp * 100) / 100,
+      consistency: Math.round(consistency * 100)
+    };
+  }
+
+  /* ============ AMBIENT BACKGROUND (single bird-song MP3) ============
+     Using HTMLAudioElement also activates iOS Safari's media-playback audio
+     session, which lets voice (Web Audio) be heard through the silent
+     switch and at expected volume. We always create the element on the
+     user gesture; if ambient is OFF we just keep volume at 0. */
+  let birdsAudio = null;
+  function ensureBirds(){
+    if(!birdsAudio){
+      birdsAudio = new Audio('/birds.mp3');
+      birdsAudio.loop = true;
+      birdsAudio.preload = 'auto';
+      birdsAudio.crossOrigin = 'anonymous';
+      birdsAudio.playsInline = true;
+      birdsAudio.volume = 0;
+    }
+    return birdsAudio;
+  }
+  function startAmbient(kind){
+    const a = ensureBirds();
+    const target = (kind === 'birds') ? (cfg.ambientVol ?? 0.4) : 0;
+    // Always try to play (so iOS audio session is active), then ramp volume
+    const attemptPlay = () => a.play().catch(err => {
+      try { console.warn('birds.play failed', err && err.name); } catch(_){}
+    });
+    attemptPlay();
+    fadeAmbientVolume(target, 1.5);
+  }
+  function stopAmbient(){
+    if(!birdsAudio) return;
+    fadeAmbientVolume(0, 0.6, () => {
+      try { birdsAudio.pause(); } catch(e){}
+    });
+  }
+  function setAmbientVolume(v){
+    if(!birdsAudio) return;
+    fadeAmbientVolume(v, 0.25);
+  }
+  let __ambFadeId = null;
+  function fadeAmbientVolume(target, seconds, onDone){
+    if(!birdsAudio) return;
+    if(__ambFadeId) clearInterval(__ambFadeId);
+    const start = birdsAudio.volume;
+    const steps = Math.max(8, Math.floor(seconds * 30));
+    let i = 0;
+    __ambFadeId = setInterval(() => {
+      i++;
+      const t = i / steps;
+      birdsAudio.volume = Math.max(0, Math.min(1, start + (target - start) * t));
+      if(i >= steps){ clearInterval(__ambFadeId); __ambFadeId = null; if(onDone) onDone(); }
+    }, (seconds * 1000) / steps);
+  }
+
+  // Self-contained procedural ambient sounds — no external files needed.
+  class AmbientSound {
+    constructor(ctx, dest, kind, volume){
+      this.ctx = ctx;
+      this.dest = dest;
+      this.kind = kind;
+      this.gain = ctx.createGain();
+      this.gain.gain.value = 0;
+      this.gain.connect(dest);
+      this.targetVol = volume;
+      this.nodes = [];
+      this.timers = [];
+      this.alive = true;
+    }
+    start(){
+      if(this.kind === 'rain') this._rain();
+      else if(this.kind === 'ocean') this._ocean();
+      else if(this.kind === 'forest') this._forest();
+      else if(this.kind === 'birds') this._birds();
+      const t = this.ctx.currentTime;
+      this.gain.gain.setValueAtTime(0.0001, t);
+      this.gain.gain.linearRampToValueAtTime(this.targetVol, t + 1.8);
+    }
+    setVolume(v){
+      this.targetVol = v;
+      const t = this.ctx.currentTime;
+      this.gain.gain.cancelScheduledValues(t);
+      this.gain.gain.linearRampToValueAtTime(v, t + 0.3);
+    }
+    stop(){
+      this.alive = false;
+      const t = this.ctx.currentTime;
+      this.gain.gain.cancelScheduledValues(t);
+      this.gain.gain.linearRampToValueAtTime(0.0001, t + 0.6);
+      this.timers.forEach(id => clearTimeout(id));
+      setTimeout(() => {
+        this.nodes.forEach(n => { try{ n.stop && n.stop(); }catch(e){} try{ n.disconnect(); }catch(e){} });
+        this.nodes = [];
+        try{ this.gain.disconnect(); }catch(e){}
+      }, 800);
+    }
+    _noiseBuffer(seconds, color = 'white'){
+      const ctx = this.ctx;
+      const len = Math.floor(ctx.sampleRate * seconds);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      if(color === 'brown'){
+        let last = 0;
+        for(let i=0;i<len;i++){
+          const w = (Math.random()*2-1) * 0.5;
+          last = (last + 0.02*w) / 1.02;
+          d[i] = last * 3.5;
+        }
+      } else if(color === 'pink'){
+        let b0=0,b1=0,b2=0;
+        for(let i=0;i<len;i++){
+          const w = Math.random()*2-1;
+          b0 = 0.99765*b0 + w*0.0990460;
+          b1 = 0.96300*b1 + w*0.2965164;
+          b2 = 0.57000*b2 + w*1.0526913;
+          d[i] = (b0+b1+b2 + w*0.1848) * 0.18;
+        }
+      } else {
+        for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * 0.5;
+      }
+      return buf;
+    }
+    _looper(buffer){
+      const src = this.ctx.createBufferSource();
+      src.buffer = buffer;
+      src.loop = true;
+      this.nodes.push(src);
+      return src;
+    }
+    _rain(){
+      // Layered: bright lowpassed noise (the constant patter) + a slower
+      // higher noise layer (the further sheets of rain) + sparse "drops"
+      const ctx = this.ctx;
+      const main = this._looper(this._noiseBuffer(4, 'pink'));
+      const lp = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=4500;
+      const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=400;
+      const g1 = ctx.createGain(); g1.gain.value = 0.65;
+      main.connect(hp).connect(lp).connect(g1).connect(this.gain);
+      main.start();
+
+      const distant = this._looper(this._noiseBuffer(6, 'pink'));
+      const dlp = ctx.createBiquadFilter(); dlp.type='lowpass'; dlp.frequency.value=900;
+      const dg = ctx.createGain(); dg.gain.value = 0.4;
+      distant.connect(dlp).connect(dg).connect(this.gain);
+      distant.start();
+
+      this.nodes.push(lp,hp,g1,dlp,dg);
+      // Sparse drops
+      const drop = () => {
+        if(!this.alive) return;
+        const t = ctx.currentTime;
+        const o = ctx.createOscillator();
+        o.type = 'sine';
+        const f = 1800 + Math.random()*1800;
+        o.frequency.setValueAtTime(f, t);
+        o.frequency.exponentialRampToValueAtTime(f*0.5, t + 0.06);
+        const og = ctx.createGain();
+        og.gain.setValueAtTime(0.0001, t);
+        og.gain.exponentialRampToValueAtTime(0.05 + Math.random()*0.05, t + 0.005);
+        og.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+        o.connect(og).connect(this.gain);
+        o.start(t); o.stop(t + 0.15);
+        this.timers.push(setTimeout(drop, 200 + Math.random()*1400));
+      };
+      this.timers.push(setTimeout(drop, 600));
+    }
+    _ocean(){
+      const ctx = this.ctx;
+      const noise = this._looper(this._noiseBuffer(8, 'brown'));
+      const lp = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=550;
+      const lpMod = ctx.createOscillator(); lpMod.frequency.value = 0.10; // ~10s wave
+      const lpModGain = ctx.createGain(); lpModGain.gain.value = 250;
+      lpMod.connect(lpModGain).connect(lp.frequency);
+      lpMod.start();
+
+      // Slow amplitude shaping for the wave swells
+      const ampLfo = ctx.createOscillator(); ampLfo.frequency.value = 0.10;
+      const ampLfoGain = ctx.createGain(); ampLfoGain.gain.value = 0.30;
+      const ampBase = ctx.createGain(); ampBase.gain.value = 0.55;
+      ampLfo.connect(ampLfoGain).connect(ampBase.gain);
+      ampLfo.start();
+
+      noise.connect(lp).connect(ampBase).connect(this.gain);
+      noise.start();
+
+      // A tiny bit of high noise for the foam tail
+      const foam = this._looper(this._noiseBuffer(4, 'pink'));
+      const foamHp = ctx.createBiquadFilter(); foamHp.type='highpass'; foamHp.frequency.value=2000;
+      const foamG = ctx.createGain(); foamG.gain.value = 0.0;
+      // Modulate foam gain with the wave LFO (delayed)
+      const foamLfo = ctx.createOscillator(); foamLfo.frequency.value = 0.10;
+      const foamLfoGain = ctx.createGain(); foamLfoGain.gain.value = 0.10;
+      foamLfo.connect(foamLfoGain).connect(foamG.gain);
+      foamLfo.start();
+      foam.connect(foamHp).connect(foamG).connect(this.gain);
+      foam.start();
+
+      this.nodes.push(lp,lpMod,lpModGain,ampLfo,ampLfoGain,ampBase,foam,foamHp,foamG,foamLfo,foamLfoGain);
+    }
+    _forest(){
+      // Soft wind + occasional bird chirps + sparse leaf rustle
+      const ctx = this.ctx;
+      const wind = this._looper(this._noiseBuffer(6, 'brown'));
+      const wlp = ctx.createBiquadFilter(); wlp.type='lowpass'; wlp.frequency.value=900;
+      const wg = ctx.createGain(); wg.gain.value = 0.55;
+      // Gentle wind swells
+      const wLfo = ctx.createOscillator(); wLfo.frequency.value = 0.07;
+      const wLfoGain = ctx.createGain(); wLfoGain.gain.value = 0.18;
+      wLfo.connect(wLfoGain).connect(wg.gain);
+      wLfo.start();
+      wind.connect(wlp).connect(wg).connect(this.gain);
+      wind.start();
+      this.nodes.push(wlp,wg,wLfo,wLfoGain);
+
+      this._scheduleBirds(false);
+      this._scheduleRustle();
+    }
+    _birds(){
+      // Sparse, soft wind underbed + frequent chirps
+      const ctx = this.ctx;
+      const wind = this._looper(this._noiseBuffer(6, 'brown'));
+      const wlp = ctx.createBiquadFilter(); wlp.type='lowpass'; wlp.frequency.value=600;
+      const wg = ctx.createGain(); wg.gain.value = 0.20;
+      wind.connect(wlp).connect(wg).connect(this.gain);
+      wind.start();
+      this.nodes.push(wlp,wg);
+      this._scheduleBirds(true);
+    }
+    _scheduleBirds(dense){
+      const tick = () => {
+        if(!this.alive) return;
+        // Sometimes a single chirp, sometimes a 2-3 note phrase
+        const notes = 1 + (Math.random() < 0.35 ? Math.floor(Math.random()*3) : 0);
+        for(let n=0;n<notes;n++){
+          this.timers.push(setTimeout(() => this._chirp(), n * (90 + Math.random()*60)));
+        }
+        const next = dense ? (700 + Math.random()*2500) : (2200 + Math.random()*5500);
+        this.timers.push(setTimeout(tick, next));
+      };
+      this.timers.push(setTimeout(tick, 400 + Math.random()*1500));
+    }
+    _chirp(){
+      if(!this.alive) return;
+      const ctx = this.ctx;
+      const t = ctx.currentTime;
+      const variant = Math.random();
+      const o = ctx.createOscillator();
+      o.type = variant < 0.5 ? 'sine' : 'triangle';
+      const baseFreq = 1800 + Math.random()*2600;
+      const peak = baseFreq * (1.15 + Math.random()*0.55);
+      o.frequency.setValueAtTime(baseFreq, t);
+      o.frequency.exponentialRampToValueAtTime(peak, t + 0.05);
+      o.frequency.exponentialRampToValueAtTime(baseFreq*0.85, t + 0.13);
+      const og = ctx.createGain();
+      const peakGain = 0.10 + Math.random()*0.10;
+      og.gain.setValueAtTime(0.0001, t);
+      og.gain.exponentialRampToValueAtTime(peakGain, t + 0.012);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+      // A touch of bandpass for "natural" coloration
+      const bp = ctx.createBiquadFilter(); bp.type='bandpass'; bp.Q.value=2; bp.frequency.value=baseFreq;
+      o.connect(bp).connect(og).connect(this.gain);
+      o.start(t); o.stop(t + 0.22);
+    }
+    _scheduleRustle(){
+      const tick = () => {
+        if(!this.alive) return;
+        const ctx = this.ctx;
+        const t = ctx.currentTime;
+        const buf = this._noiseBuffer(0.8, 'pink');
+        const src = ctx.createBufferSource(); src.buffer = buf;
+        const bp = ctx.createBiquadFilter(); bp.type='bandpass'; bp.Q.value=0.6;
+        bp.frequency.setValueAtTime(900 + Math.random()*1800, t);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.06, t + 0.15);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+        src.connect(bp).connect(g).connect(this.gain);
+        src.start(t); src.stop(t + 0.75);
+        this.timers.push(setTimeout(tick, 6000 + Math.random()*9000));
+      };
+      this.timers.push(setTimeout(tick, 3000 + Math.random()*4000));
+    }
+  }
+
+  function playChime(freqs=[523.25, 659.25, 783.99]){
+    if(!cfg.sound) return;
+    const ctx = ensureAudio();
+    const now = ctx.currentTime;
+    freqs.forEach((f, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, now + i*0.06);
+      g.gain.exponentialRampToValueAtTime(0.10, now + i*0.06 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + i*0.06 + 1.5);
+      o.connect(g).connect(masterGain);
+      o.start(now + i*0.06);
+      o.stop(now + i*0.06 + 1.6);
+    });
+  }
+
+  /* ============ ENGINE ============ */
+  let state = {
+    running:false,
+    paused:false,
+    waitTap:false,
+    round:0,
+    breath:0,
+    phase:'idle',
+    timers:[],
+    rafId:null,
+    holdStartedAt:0,
+    inhaleHoldRemaining:0
+  };
+
+  function setPhase(p){
+    state.phase = p;
+    card.dataset.phase = p;
+    // Update CSS pace vars
+    const p_ = PACES[cfg.pace];
+    document.documentElement.style.setProperty('--inhale', p_.in+'ms');
+    document.documentElement.style.setProperty('--exhale', p_.out+'ms');
+    card.style.setProperty('--inhale', p_.in+'ms');
+    card.style.setProperty('--exhale', p_.out+'ms');
+    // Drive the full-screen pink glow
+    pinkGlow.className = 'pink-glow ' + p;
+  }
+
+  function applyGlowColor(){
+    document.body.dataset.glow = cfg.glow || 'rose';
+  }
+  function setPhaseLabel(t){ phaseEl.textContent = t; }
+  function setMeta(t){ meta.textContent = t; }
+  function setCount(t){ count.textContent = t; }
+  const orbCount = document.getElementById('orb-count');
+  function setOrbCount(v){
+    if(!orbCount) return;
+    if(v == null || v === ''){ orbCount.textContent = ''; return; }
+    const s = String(v);
+    // Allow tiny markup for the unit suffix (e.g. "54<span class='unit'>s</span>")
+    if(s.indexOf('<') >= 0) orbCount.innerHTML = s;
+    else orbCount.textContent = s;
+  }
+  function setHint(t){ hint.textContent = t; }
+  function setBar(){ progressBar.style.width = (state.round / cfg.rounds * 100) + '%'; }
+
+  function clearTimers(){
+    state.timers.forEach(t => clearTimeout(t));
+    state.timers = [];
+    if(state.rafId){ cancelAnimationFrame(state.rafId); state.rafId = null; }
+    stopSoothing();
+  }
+
+  // Soothing voice rotation during the breath hold — random, no immediate repeats
+  let soothingTimers = [];
+  let lastSoothing = null;
+  function stopSoothing(){
+    soothingTimers.forEach(t => clearTimeout(t));
+    soothingTimers = [];
+  }
+  function pickRandom(list){
+    if(list.length === 1) return list[0];
+    let pick;
+    do { pick = list[Math.floor(Math.random() * list.length)]; }
+    while(pick === lastSoothing);
+    lastSoothing = pick;
+    return pick;
+  }
+  function scheduleSoothing(list, firstAtMs, intervalMs){
+    stopSoothing();
+    let elapsed = firstAtMs;
+    for(let k=0;k<8;k++){
+      const t = setTimeout(() => {
+        if(state.paused) return;
+        speak(pickRandom(list), { volume: 0.92 });
+      }, elapsed);
+      soothingTimers.push(t);
+      elapsed += intervalMs + Math.floor(Math.random()*4000) - 2000; // jitter
+    }
+  }
+  function later(fn, ms){
+    const t = setTimeout(fn, ms);
+    state.timers.push(t);
+    return t;
+  }
+
+  async function start(){
+    if(state.running) return;
+    // Synchronous setup on the user-gesture so iOS keeps the audio unlock
+    state.running = true;
+    state.paused = false;
+    state.round = 0;
+    state.breath = 0;
+    state.holdTimes = [];          // per-round empty-hold seconds
+    state.waitingToBegin = false;  // true after welcome, before first round
+    ensureAudio();                 // unlock + create graph on this gesture
+    // (motion permission is requested in handleTap, before start() is called,
+    // because iOS only honors it at the very top of the user-gesture stack)
+    // Activate the iOS audio session (HTMLAudioElement playback) so Web Audio
+    // voice and breath are audible through silent mode and at proper volume.
+    startAmbient(cfg.ambient);
+    requestWakeLock();
+    setBar();
+    cta.hidden = true;
+    pauseBtn.hidden = false;
+    setPauseUI(false);
+    setHint('');
+    setOrbHint('');                 // hide the tap-to-start hint while the welcome plays
+    setMeta('A MOMENT TO ARRIVE');
+    setPhaseLabel('WELCOME');
+    setPhase('idle');
+    hideStats();
+
+    loadRuntimeConfig();
+    preloadVoice();
+    const welcomeText = (cfg.chestTracking) ? WELCOME_WITH_CHEST : WELCOME;
+    await Promise.race([
+      speak(welcomeText, { rate: 0.94 }),
+      new Promise(res => setTimeout(res, 22000))
+    ]);
+    if(!state.running) return;
+    // Wait for the user to tap before the first round.
+    state.waitingToBegin = true;
+    state.waitTap = true;
+    setPhaseLabel('READY');
+    setMeta('');
+    setOrbHint('TAP TO BEGIN');
+  }
+
+  function setOrbHint(text){
+    if(orbHint) orbHint.textContent = text || '';
+  }
+
+  function reset(){
+    clearTimers();
+    stopAllSound();
+    stopVoice();
+    stopAmbient();
+    stopChestTracking();
+    stopStillnessMonitor();
+    releaseWakeLock();
+    state.running = false;
+    state.paused = false;
+    state.waitTap = false;
+    state.waitingToBegin = false;
+    state.holdTimes = [];
+    state.round = 0;
+    state.breath = 0;
+    setBar();
+    setPhase('idle');
+    setPhaseLabel('');
+    setOrbHint('TAP TO START');
+    setOrbCount('');
+    setBreathePromptVisible(false);
+    hideStats();
+    setMeta('WIM HOF METHOD');
+    setCount('');
+    setHint(cfg.rounds + ' ROUNDS · ' + cfg.breaths + ' BREATHS');
+    cta.hidden = false;
+    ctaText.textContent = 'START';
+    pauseBtn.hidden = true;
+  }
+
+  function setPauseUI(paused){
+    pauseIcon.style.display = paused ? 'none' : '';
+    playIcon.style.display = paused ? '' : 'none';
+    pauseBtn.setAttribute('aria-label', paused ? 'Resume' : 'Pause');
+  }
+
+  function togglePause(){
+    if(!state.running) return;
+    if(state.paused){
+      state.paused = false;
+      setPauseUI(false);
+      // Resume from current step
+      resumeAfterPause();
+    } else {
+      state.paused = true;
+      setPauseUI(true);
+      clearTimers();
+      stopAllSound();
+      stopVoice();
+      stopStillnessMonitor();
+      setPhaseLabel('PAUSED');
+    }
+  }
+
+  /* ----- ROUND FLOW ----- */
+  function beginRound(){
+    state.breath = 0;
+    state.midRoundNudgeFired = false;
+    setMeta('ROUND ' + (state.round+1) + ' OF ' + cfg.rounds);
+    setCount('0 / ' + cfg.breaths);
+    setHint('');
+    nextBreath();
+    // Mid-round check: if after ~10s the phone clearly isn't on a chest,
+    // give a one-time spoken nudge so the user doesn't have to wait until
+    // the round finishes to find out.
+    later(() => {
+      if(state.paused || !state.running) return;
+      midRoundChestCheck();
+    }, 10000);
+    // Continuous stillness monitor — fires gentle "stay with the breath"
+    // cues if the chest goes still mid-round.
+    startStillnessMonitor();
+  }
+
+  /* Continuous stillness monitor — runs while breathing rounds are active.
+     If the chest amplitude stays low for ~5s (user has stopped breathing or
+     phone has slipped off) Noemi speaks one short stillness cue. 15s
+     cooldown so it never spams. Stops automatically during holds / pause /
+     reset. */
+  let stillnessTimer = null;
+  let stillnessLastNudgeTs = 0;
+  function startStillnessMonitor(){
+    stopStillnessMonitor();
+    stillnessLastNudgeTs = 0;
+    stillnessTimer = setInterval(checkStillness, 1500);
+  }
+  function stopStillnessMonitor(){
+    if(stillnessTimer){ clearInterval(stillnessTimer); stillnessTimer = null; }
+  }
+  function checkStillness(){
+    if(!chestActive || motionPermission !== 'granted') return;
+    if(state.paused || !state.running) return;
+    if(state.phase !== 'inhale' && state.phase !== 'exhale') return; // only during active breaths
+    if(!chestSamples.length) return;
+    const tNow = performance.now() - chestStartTs;
+    if(tNow - stillnessLastNudgeTs < 15000) return;            // cooldown
+    if(tNow < 6000) return;                                    // give the round a moment to ramp up
+    // Last 5s window
+    let mx = -Infinity, mn = Infinity, count = 0;
+    for(let i = chestSamples.length - 1; i >= 0; i--){
+      const s = chestSamples[i];
+      if(s.t < tNow - 5000) break;
+      if(s.z > mx) mx = s.z;
+      if(s.z < mn) mn = s.z;
+      count++;
+    }
+    if(count < 30) return;
+    const ptp = mx - mn;
+    if(ptp < 0.10){
+      stillnessLastNudgeTs = tNow;
+      let pick;
+      do { pick = NUDGES_STILLNESS[Math.floor(Math.random()*NUDGES_STILLNESS.length)]; }
+      while(pick === lastNudge && NUDGES_STILLNESS.length > 1);
+      lastNudge = pick;
+      speak(pick, { volume: 0.95 });
+      showToast('Not sensing your breath', 3500);
+    }
+  }
+
+  function midRoundChestCheck(){
+    if(state.midRoundNudgeFired) return;
+    if(motionPermission !== 'granted') return;
+    if(!chestActive || !chestSamples.length) return;
+    const tNow = performance.now() - chestStartTs;
+    const win = chestSamples.filter(s => s.t > tNow - 8000);
+    if(win.length < 30) return;
+    let mx = -Infinity, mn = Infinity;
+    win.forEach(s => { if(s.z > mx) mx = s.z; if(s.z < mn) mn = s.z; });
+    const ptp = mx - mn;
+    if(ptp < 0.15){
+      // Phone seems static — pick a static-pool nudge and play it
+      let pick;
+      do { pick = NUDGES_STATIC[Math.floor(Math.random()*NUDGES_STATIC.length)]; }
+      while(pick === lastNudge && NUDGES_STATIC.length > 1);
+      lastNudge = pick;
+      state.midRoundNudgeFired = true;
+      speak(pick, { volume: 0.95 });
+      showToast('Place phone on your chest', 3500);
+    }
+  }
+
+  function nextBreath(){
+    if(state.paused) return;
+    const p = PACES[cfg.pace];
+    const isLast = (state.breath === cfg.breaths - 1);
+
+    setPhase('inhale');
+    setPhaseLabel('BREATHE IN');
+    setOrbCount(state.breath + 1);
+    playBreath('inhale', p.in);
+    // Heads-up before the very last exhale of the round
+    if(isLast) speak(PREPARE_HOLD, { volume: 0.95 });
+    later(() => {
+      if(state.paused) return;
+      setPhase('exhale');
+      setPhaseLabel('BREATHE OUT');
+      playBreath('exhale', p.out);
+      later(() => {
+        if(state.paused) return;
+        state.breath++;
+        setCount(state.breath + ' / ' + cfg.breaths);
+        if(state.breath >= cfg.breaths){
+          enterExhaleHold();
+        } else {
+          nextBreath();
+        }
+      }, p.out);
+    }, p.in);
+  }
+
+  function enterExhaleHold(){
+    clearTimers();
+    stopStillnessMonitor(); // stillness during a hold is the goal, not a problem
+    setPhase('hold-empty');
+    setPhaseLabel('HOLD YOUR BREATH');
+    setCount('');
+    playChime([392.00, 523.25]);
+    // Brief delay so "Hold your breath" doesn't trample the chime
+    later(() => speak('Hold your breath', { volume: 1.0 }), 220);
+    // Gentle, encouraging lines — first one ~16s in, then every ~22s with jitter
+    scheduleSoothing(SOOTHING_HOLD, 16000, 22000);
+    state.holdStartedAt = performance.now();
+    state.waitTap = (cfg.hold === 'tap');
+    setBreathePromptVisible(state.waitTap);
+
+    if(cfg.hold === 'tap'){
+      setHint('TAP WHEN YOU NEED TO BREATHE');
+      const tick = () => {
+        if(state.paused) return;
+        const s = (performance.now() - state.holdStartedAt)/1000;
+        setOrbCount(formatHoldSec(s));
+        state.rafId = requestAnimationFrame(tick);
+      };
+      state.rafId = requestAnimationFrame(tick);
+    } else {
+      const total = parseInt(cfg.hold,10);
+      setHint('HOLD');
+      const tick = () => {
+        if(state.paused) return;
+        const s = (performance.now() - state.holdStartedAt)/1000;
+        const remain = Math.max(0, total - s);
+        setOrbCount(formatHoldSec(remain));
+        if(remain <= 0){
+          // Record the timed hold
+          state.holdTimes.push(total);
+          enterInhaleHold();
+          return;
+        }
+        state.rafId = requestAnimationFrame(tick);
+      };
+      state.rafId = requestAnimationFrame(tick);
+    }
+  }
+
+  function enterInhaleHold(){
+    if(state.paused){
+      state.waitTap = false;
+      return;
+    }
+    clearTimers();
+    state.waitTap = false;
+    setBreathePromptVisible(false);
+    playChime([523.25, 659.25, 783.99]);
+    setPhase('hold-full');
+    setPhaseLabel('DEEP BREATH IN');
+    playBreath('inhale', PACES[cfg.pace].in);
+    speak('Take a deep breath in and hold');
+    state.inhaleHoldRemaining = cfg.inhaleHold;
+    later(() => {
+      if(state.paused) return;
+      setPhaseLabel('HOLD');
+      const halfMs = Math.max(2000, (cfg.inhaleHold * 1000) * 0.4);
+      scheduleSoothing(SOOTHING_INHALE_HOLD, halfMs, 9999999);
+      runInhaleHoldCountdown();
+    }, PACES[cfg.pace].in);
+  }
+
+  function runInhaleHoldCountdown(){
+    const startTs = performance.now();
+    const startRem = state.inhaleHoldRemaining;
+    const tick = () => {
+      if(state.paused){
+        state.inhaleHoldRemaining = Math.max(0, startRem - (performance.now()-startTs)/1000);
+        return;
+      }
+      const rem = Math.max(0, startRem - (performance.now()-startTs)/1000);
+      state.inhaleHoldRemaining = rem;
+      setOrbCount(Math.ceil(rem) + 's');
+      if(rem <= 0){
+        finishRound();
+        return;
+      }
+      state.rafId = requestAnimationFrame(tick);
+    };
+    state.rafId = requestAnimationFrame(tick);
+  }
+
+  function finishRound(){
+    clearTimers();
+    state.round++;
+    setBar();
+    setBreathePromptVisible(false);
+    setOrbCount('');
+    playChime([523.25, 783.99, 1046.5]);
+
+    if(state.round >= cfg.rounds){
+      finishSession();
+      return;
+    }
+
+    // Auto-advance — no tap needed. Brief pause so the chime + voice land.
+    setPhase('hold-empty');
+    setPhaseLabel('RELEASE');
+    setCount('ROUND ' + state.round + ' OF ' + cfg.rounds);
+    setHint('NEXT ROUND BEGINS...');
+    speak(ROUND_RELEASE(state.round));
+    state.waitTap = false;
+
+    // If chest tracking detected weak / absent breath, queue a gentle nudge
+    // to play after the release voice and before the next round starts.
+    let nudgeDelay = 0;
+    const q = evalRoundBreathQuality();
+    if(q && (q.kind === 'static' || q.kind === 'shallow' || q.kind === 'no-motion-events')){
+      const pool = (q.kind === 'shallow') ? NUDGES_SHALLOW : NUDGES_STATIC;
+      let pick;
+      do { pick = pool[Math.floor(Math.random()*pool.length)]; }
+      while(pick === lastNudge && pool.length > 1);
+      lastNudge = pick;
+      later(() => {
+        if(state.paused || !state.running) return;
+        speak(pick, { volume: 0.95 });
+      }, 3500);
+      const toastMsg = (q.kind === 'shallow')
+        ? 'Try deeper breaths next round'
+        : 'Place phone on your chest';
+      showToast(toastMsg, 3500);
+      nudgeDelay = 3500;
+    }
+    state.lastBreathEval = q;
+    later(() => {
+      if(state.paused || !state.running) return;
+      beginRound();
+    }, 4500 + nudgeDelay);
+  }
+
+  function finishSession(){
+    state.running = false;
+    state.waitTap = true;
+    state.chestStats = analyseChestData();
+    stopChestTracking();
+    releaseWakeLock();
+    setPhase('idle');
+    setPhaseLabel('COMPLETE');
+    setMeta('WELL DONE');
+    setCount('');
+    setHint('');
+    setOrbHint('TAP TO BEGIN AGAIN');
+    showStats();
+    speak('Session complete. Well done.');
+    cta.hidden = true;
+    pauseBtn.hidden = true;
+    persistSession();   // save to Supabase if signed in (no-op for guests)
+  }
+
+  /* ===== STATS ===== */
+  function hideStats(){ const el = document.getElementById('stats'); if(el) el.hidden = true; }
+  function showStats(){
+    const el = document.getElementById('stats');
+    if(!el) return;
+    const rows = document.getElementById('stats-rows');
+    const best = document.getElementById('stats-best');
+    const congrats = document.getElementById('stats-congrats');
+    rows.innerHTML = '';
+    state.holdTimes.forEach((sec, i) => {
+      const r = document.createElement('div');
+      r.className = 'stats-row';
+      r.innerHTML = '<span class="lbl">ROUND ' + (i+1) + '</span><span class="val">' + formatHoldSec(sec) + '</span>';
+      rows.appendChild(r);
+    });
+    const top = state.holdTimes.length ? Math.max(...state.holdTimes) : 0;
+    best.innerHTML = top ? ('BEST <span class="v">' + formatHoldSec(top) + '</span>') : '';
+
+    // Always surface chest tracking status if it was on, so the user knows
+    // whether the phone actually saw their breath.
+    if(cfg.chestTracking){
+      const r = document.createElement('div');
+      r.className = 'stats-row';
+      let label = 'CHEST', value = '—';
+      if(motionPermission === 'denied'){
+        label = 'MOTION'; value = 'DENIED';
+      } else if(motionPermission == null){
+        label = 'MOTION'; value = 'NOT ASKED';
+      } else if(state.chestStats && state.chestStats.bpm){
+        label = 'BREATHING'; value = state.chestStats.bpm + ' /min';
+      } else if(motionPermission === 'granted'){
+        label = 'BREATHING'; value = 'NOT DETECTED';
+      }
+      r.innerHTML = '<span class="lbl">' + label + '</span><span class="val">' + value + '</span>';
+      rows.appendChild(r);
+      if(state.chestStats && state.chestStats.consistency != null){
+        const r2 = document.createElement('div');
+        r2.className = 'stats-row';
+        r2.innerHTML = '<span class="lbl">RHYTHM</span><span class="val">' +
+          state.chestStats.consistency + '%</span>';
+        rows.appendChild(r2);
+      }
+    }
+    congrats.textContent = pickCongrats(top);
+    el.hidden = false;
+  }
+  function pickCongrats(bestSec){
+    const lines = [
+      "Beautiful work. Carry the calm with you.",
+      "You showed up for yourself. That matters.",
+      "Strong breath. Strong mind.",
+      "You did it. Be proud.",
+      "Calm. Clear. Complete.",
+      "Take this stillness with you into the day."
+    ];
+    if(bestSec >= 120) lines.push("Two minutes — incredible control.");
+    else if(bestSec >= 90) lines.push("Over a minute and a half — powerful hold.");
+    else if(bestSec >= 60) lines.push("A full minute of stillness — beautifully done.");
+    return lines[Math.floor(Math.random()*lines.length)];
+  }
+
+  function resumeAfterPause(){
+    // Resume by re-entering the current phase fresh.
+    // For simplicity: re-enter the macro state.
+    if(state.phase === 'inhale' || state.phase === 'exhale'){
+      nextBreath();
+    } else if(state.phase === 'hold-empty' && !state.waitTap){
+      // timed exhale hold — restart countdown from saved progress (skip: just reset hold timing)
+      enterExhaleHold();
+    } else if(state.phase === 'hold-full'){
+      runInhaleHoldCountdown();
+    } else if(state.waitTap){
+      // waiting on tap — nothing to resume
+      setPhaseLabel(state.phase === 'idle' ? 'COMPLETE' : 'HOLD');
+    }
+  }
+
+  function numberWord(n){
+    return ['zero','one','two','three','four','five','six','seven','eight'][n] || String(n);
+  }
+
+  function formatTime(s){
+    s = Math.max(0, s);
+    const m = Math.floor(s/60);
+    const sec = Math.floor(s%60);
+    if(m>0) return m+':'+String(sec).padStart(2,'0');
+    return Math.ceil(s)+'s';
+  }
+  // Big-orb hold display — minutes:seconds when >=60s, else "Ns"
+  function formatHoldSec(s){
+    s = Math.max(0, s);
+    if(s >= 60){
+      const m = Math.floor(s/60);
+      const sec = Math.floor(s%60);
+      return m+':'+String(sec).padStart(2,'0');
+    }
+    return Math.floor(s)+'<span class="unit">s</span>';
+  }
+  // setOrbCount accepts an HTML string for the formatted seconds
+  // (overrides the basic version that only sets text)
+  function setOrbCountHTML(html){
+    if(orbCount) orbCount.innerHTML = html == null ? '' : String(html);
+  }
+  function setBreathePromptVisible(on){
+    if(on) card.dataset.tapPrompt = 'true';
+    else delete card.dataset.tapPrompt;
+  }
+
+  // Theme application
+  function applyTheme(){
+    if(cfg.theme === 'dark') document.body.dataset.theme = 'dark';
+    else delete document.body.dataset.theme;
+  }
+
+  /* ============ INPUT ============ */
+  // Tap on viz/content (not buttons/drawer) advances flow when waiting
+  card.addEventListener('click', (e) => {
+    if(e.target.closest('.controls') || e.target.closest('.header') || e.target.closest('.drawer')) return;
+    handleTap();
+  });
+  cta.addEventListener('click', (e) => { e.stopPropagation(); handleTap(); });
+
+  function handleTap(){
+    if(drawer.classList.contains('open')) return;
+    if(!state.running && !state.waitTap){
+      // Request motion permission synchronously here, while the user-gesture
+      // activation is at the top of the call stack. iOS Safari's
+      // requestPermission() requires this — calling later (after awaits) is
+      // a common silent-fail pattern.
+      tryRequestMotionPermission();
+      start();
+      return;
+    }
+    if(state.waitTap){
+      if(!state.running && state.phase === 'idle'){
+        // Finished — start over
+        reset();
+        start();
+        return;
+      }
+      // After welcome, before first round
+      if(state.waitingToBegin){
+        state.waitingToBegin = false;
+        state.waitTap = false;
+        setOrbHint('');
+        if(cfg.chestTracking) startChestTracking();
+        beginRound();
+        return;
+      }
+      // User tapping to end the empty-lung hold: capture how long they held
+      if(state.phase === 'hold-empty' && cfg.hold === 'tap'){
+        const sec = (performance.now() - state.holdStartedAt) / 1000;
+        state.holdTimes.push(Math.round(sec));
+        setBreathePromptVisible(false);
+        enterInhaleHold();
+      }
+    }
+  }
+
+  pauseBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePause(); });
+  resetBtn.addEventListener('click', (e) => { e.stopPropagation(); reset(); });
+  /* ===== Birds volume control =====
+     Collapsed: just the speaker icon with "BIRDS VOLUME" label to its left.
+     Tap the speaker -> the gray track expands and the label hides.
+     While expanded: drag the speaker along the track to set volume,
+     tap (no drag) to mute / unmute, and after 5s of inactivity it
+     auto-collapses back to the labelled icon. */
+  const volControl = document.getElementById('vol-control');
+  const volTrack = document.getElementById('vol-track');
+  const volThumb = document.getElementById('vol-thumb');
+  const volFill  = document.getElementById('vol-track-fill');
+  let volCollapseTimer = null;
+  function isVolExpanded(){ return volControl && volControl.classList.contains('expanded'); }
+  function expandVol(){
+    if(!volControl) return;
+    volControl.classList.add('expanded');
+    resetCollapseTimer();
+  }
+  function collapseVol(){
+    if(!volControl) return;
+    volControl.classList.remove('expanded');
+    if(volCollapseTimer){ clearTimeout(volCollapseTimer); volCollapseTimer = null; }
+  }
+  function resetCollapseTimer(){
+    if(volCollapseTimer) clearTimeout(volCollapseTimer);
+    volCollapseTimer = setTimeout(collapseVol, 5000);
+  }
+  const drawerVolEl = () => document.getElementById('amb-vol');
+  const drawerVolLbl = () => document.getElementById('v-amb-vol');
+
+  function syncVolUI(){
+    const v = cfg.ambientVol ?? 0;
+    const pct = Math.round(v * 100);
+    if(volTrack){
+      volTrack.style.setProperty('--pos', pct + '%');
+      volTrack.style.setProperty('--fill', pct + '%');
+      // Apply directly to thumb / fill in case the var didn't propagate
+      if(volThumb) volThumb.style.left = pct + '%';
+      if(volFill)  volFill.style.width = pct + '%';
+      volTrack.classList.toggle('muted', v <= 0);
+      volTrack.setAttribute('aria-valuenow', pct);
+    }
+    soundOn.style.display  = v > 0 ? '' : 'none';
+    soundOff.style.display = v > 0 ? 'none' : '';
+    const lbl = drawerVolLbl();
+    if(lbl) lbl.textContent = pct + '%';
+    const drawerSlider = drawerVolEl();
+    if(drawerSlider) drawerSlider.value = pct;
+  }
+
+  function applyVol(pct, save){
+    const clamped = Math.max(0, Math.min(100, pct));
+    const v = clamped / 100;
+    cfg.ambientVol = v;
+    cfg.ambient = v > 0 ? 'birds' : 'none';
+    if(save) saveConfig();
+    if(v > 0){
+      try {
+        ensureBirds();
+        birdsAudio && birdsAudio.play && birdsAudio.play().catch(()=>{});
+      } catch(e){}
+    }
+    setAmbientVolume(v);
+    syncVolUI();
+  }
+
+  if(volTrack){
+    let drag = null;
+    const pctFromEvent = (e) => {
+      const r = volTrack.getBoundingClientRect();
+      const x = (e.clientX != null ? e.clientX : (e.touches && e.touches[0] && e.touches[0].clientX) || 0) - r.left;
+      return Math.max(0, Math.min(100, (x / r.width) * 100));
+    };
+    const onDown = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      drag = { moved: false, startPct: cfg.ambientVol * 100 };
+      volTrack.classList.add('dragging');
+      // Capture pointer for smooth drag
+      try { e.pointerId != null && volTrack.setPointerCapture(e.pointerId); } catch(_){}
+    };
+    const onMove = (e) => {
+      if(!drag) return;
+      // Only drag-to-set-volume when expanded — collapsed state has no track to drag along
+      if(!isVolExpanded()) return;
+      const pct = pctFromEvent(e);
+      if(Math.abs(pct - drag.startPct) > 2) drag.moved = true;
+      applyVol(pct, false);
+      resetCollapseTimer();
+    };
+    const onUp = (e) => {
+      if(!drag) return;
+      volTrack.classList.remove('dragging');
+      if(drag.moved){
+        // Drag finished — persist + restart idle timer
+        saveConfig();
+        resetCollapseTimer();
+      } else {
+        // No drag — interpret as a tap
+        if(!isVolExpanded()){
+          // First tap: just expand the slider; don't change volume yet
+          expandVol();
+        } else {
+          // Already expanded: tap toggles mute / unmute
+          const cur = cfg.ambientVol ?? 0;
+          if(cur > 0){
+            cfg.__lastVol = cur;
+            applyVol(0, true);
+          } else {
+            applyVol((cfg.__lastVol || 0.4) * 100, true);
+          }
+          resetCollapseTimer();
+        }
+      }
+      drag = null;
+    };
+    if('PointerEvent' in window){
+      volTrack.addEventListener('pointerdown', onDown);
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
+    } else {
+      volTrack.addEventListener('mousedown', onDown);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      volTrack.addEventListener('touchstart', (e) => onDown(e.touches[0] || e), { passive: false });
+      window.addEventListener('touchmove', (e) => onMove(e.touches[0] || e), { passive: false });
+      window.addEventListener('touchend', onUp);
+    }
+  }
+
+  /* ============ SETTINGS DRAWER ============ */
+  const stepperLimits = {
+    rounds: { min:1, max:8, step:1, fmt: v => v },
+    breaths: { min:15, max:60, step:5, fmt: v => v },
+    inhaleHold: { min:5, max:60, step:5, fmt: v => v + 's' }
+  };
+
+  function renderSettings(){
+    const setText = (id, t) => { const el = document.getElementById(id); if(el) el.textContent = t; };
+    setText('v-rounds', cfg.rounds);
+    setText('v-breaths', cfg.breaths);
+    setText('v-pace', PACES[cfg.pace] ? PACES[cfg.pace].label : '');
+
+    document.querySelectorAll('#seg-pace button').forEach(b => {
+      b.classList.toggle('active', b.dataset.pace === cfg.pace);
+    });
+    document.querySelectorAll('#seg-hold button').forEach(b => {
+      b.classList.toggle('active', String(b.dataset.hold) === String(cfg.hold));
+    });
+    document.querySelectorAll('#seg-voice button').forEach(b => {
+      b.classList.toggle('active', (b.dataset.voice === 'on') === !!cfg.voice);
+    });
+    document.querySelectorAll('#seg-ambient button').forEach(b => {
+      b.classList.toggle('active', b.dataset.amb === cfg.ambient);
+    });
+    const ambLabel = document.getElementById('v-ambient');
+    if(ambLabel) ambLabel.textContent = cfg.ambient === 'birds' ? 'ON' : 'OFF';
+    document.querySelectorAll('#seg-theme button').forEach(b => {
+      b.classList.toggle('active', b.dataset.theme === (cfg.theme || 'light'));
+    });
+    document.querySelectorAll('#seg-chest button').forEach(b => {
+      const on = (b.dataset.chest === 'on') === !!cfg.chestTracking;
+      b.classList.toggle('active', on);
+    });
+    const ambVol = document.getElementById('amb-vol');
+    if(ambVol) ambVol.value = Math.round((cfg.ambientVol || 0.4) * 100);
+    const ambVolLabel = document.getElementById('v-amb-vol');
+    if(ambVolLabel) ambVolLabel.textContent = Math.round((cfg.ambientVol || 0.4) * 100) + '%';
+    document.querySelectorAll('#seg-glow button').forEach(b => {
+      b.classList.toggle('active', b.dataset.glow === cfg.glow);
+    });
+  }
+
+  /* All settings-drawer buttons are handled by ONE delegated click listener
+     on the drawer. iOS Safari sometimes drops individual delegated listeners
+     on dynamically rendered controls — a single parent listener is reliable. */
+  function onDrawerClick(e){
+    const btn = e.target.closest('button');
+    if(!btn || !drawer.contains(btn)) return;
+
+    // Stepper +/-
+    if(btn.matches('.stepper button') && btn.dataset.key && stepperLimits[btn.dataset.key]){
+      const key = btn.dataset.key;
+      const lim = stepperLimits[key];
+      const dir = btn.dataset.act === 'inc' ? 1 : -1;
+      cfg[key] = Math.max(lim.min, Math.min(lim.max, cfg[key] + dir*lim.step));
+      saveConfig(); renderSettings();
+      return;
+    }
+    // Segment toggles by data attribute
+    if(btn.dataset.pace){
+      cfg.pace = btn.dataset.pace;
+      saveConfig(); renderSettings();
+      return;
+    }
+    if(btn.dataset.hold){
+      cfg.hold = btn.dataset.hold === 'tap' ? 'tap' : parseInt(btn.dataset.hold,10);
+      saveConfig(); renderSettings();
+      return;
+    }
+    if(btn.dataset.voice){
+      cfg.voice = btn.dataset.voice === 'on';
+      saveConfig(); renderSettings();
+      if(!cfg.voice && 'speechSynthesis' in window) speechSynthesis.cancel();
+      return;
+    }
+    if(btn.dataset.amb){
+      cfg.ambient = btn.dataset.amb;
+      saveConfig(); renderSettings();
+      if(cfg.ambient === 'none'){ stopAmbient(); }
+      else {
+        ensureAudio(); startAmbient(cfg.ambient);
+        if(!state.running){
+          clearTimeout(window.__ambPreviewTimer);
+          window.__ambPreviewTimer = setTimeout(() => { if(!state.running) stopAmbient(); }, 8000);
+        }
+      }
+      return;
+    }
+    if(btn.dataset.glow){
+      cfg.glow = btn.dataset.glow;
+      saveConfig(); applyGlowColor(); renderSettings();
+      return;
+    }
+    if(btn.dataset.theme){
+      cfg.theme = btn.dataset.theme;
+      saveConfig(); applyTheme(); renderSettings();
+      return;
+    }
+    if(btn.dataset.chest){
+      cfg.chestTracking = (btn.dataset.chest === 'on');
+      saveConfig(); renderSettings(); renderChestStatus();
+      return;
+    }
+  }
+  // Single source of truth: a document-level capture-phase listener that
+  // routes drawer button taps. iOS Safari occasionally drops bubble-phase
+  // click listeners on certain stacking contexts; capture is reliable.
+  // Debouncing prevents click + pointerup double-firing on the same tap.
+  let __lastBtn = null, __lastBtnTs = 0;
+  function routeDrawerEvent(e){
+    const btn = e.target && e.target.closest && e.target.closest('button');
+    if(!btn) return;
+    if(!drawer.contains(btn)) return;
+    if(btn.id === 'close-settings' || btn.id === 'defaults') return; // their own listeners
+    const now = Date.now();
+    if(btn === __lastBtn && (now - __lastBtnTs) < 350) return;
+    __lastBtn = btn; __lastBtnTs = now;
+    onDrawerClick({ target: btn });
+  }
+  document.addEventListener('click', routeDrawerEvent, true);
+  document.addEventListener('pointerup', routeDrawerEvent, true);
+
+  // Settings-drawer volume slider mirrors the main-screen draggable thumb
+  const ambVolEl = document.getElementById('amb-vol');
+  if(ambVolEl){
+    ambVolEl.addEventListener('input', (e) => {
+      applyVol(parseInt(e.target.value, 10), true);
+    });
+  }
+
+  openSettings.addEventListener('click', (e) => {
+    e.stopPropagation();
+    // If a session is running, pause it first so changes don't fight live timers
+    if(state.running && !state.paused) togglePause();
+    drawer.classList.add('open');
+    document.body.dataset.drawer = 'open';
+    renderSettings();
+  });
+  closeSettings.addEventListener('click', (e) => {
+    e.stopPropagation();
+    drawer.classList.remove('open');
+    delete document.body.dataset.drawer;
+    // If we weren't running, just refresh the idle hint with new values
+    if(!state.running) reset();
+    else setHint(cfg.rounds + ' ROUNDS · ' + cfg.breaths + ' BREATHS');
+  });
+  defaultsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    Object.assign(cfg, {
+      rounds:3, breaths:30, pace:'medium', hold:'tap', inhaleHold:15,
+      ambient:'birds', glow:'forest', theme:'light', chestTracking:true
+    });
+    saveConfig();
+    applyTheme();
+    applyGlowColor();
+    renderSettings();
+  });
+
+  // Prevent gesture/zoom
+  document.addEventListener('gesturestart', e => e.preventDefault());
+  document.addEventListener('dblclick', e => e.preventDefault());
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if(e.key === ' '){ e.preventDefault(); state.running ? togglePause() : handleTap(); }
+    if(e.key === 'Escape'){
+      if(drawer.classList.contains('open')){ drawer.classList.remove('open'); delete document.body.dataset.drawer; }
+      else reset();
+    }
+  });
+
+  /* ============ WELCOME / INTRO SCREEN ============ */
+  const intro = document.getElementById('intro');
+  function showIntro(){ if(intro) intro.hidden = false; }
+  function hideIntro(){
+    if(intro) intro.hidden = true;
+    try { localStorage.setItem('breathe-intro-seen', '1'); } catch(e){}
+  }
+  function maybeShowIntro(){
+    let seen = false;
+    try { seen = localStorage.getItem('breathe-intro-seen') === '1'; } catch(e){}
+    if(!seen) showIntro();
+  }
+  // Wire buttons
+  const introSkip   = document.getElementById('intro-skip');
+  const introGoogle = document.getElementById('intro-google');
+  const introEmail  = document.getElementById('intro-email');
+  const emailForm   = document.getElementById('email-form');
+  const emailInput  = document.getElementById('email-input');
+  const emailSend   = document.getElementById('email-send');
+  const emailNote   = document.getElementById('email-note');
+
+  if(introSkip)   introSkip.addEventListener('click', () => hideIntro());
+
+  async function oauth(provider){
+    if(!sb){ showToast('Sign-in unavailable'); return; }
+    try {
+      const { error } = await sb.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: location.origin + location.pathname }
+      });
+      if(error) throw error;
+      // Browser redirects to provider — control returns after callback
+    } catch(e){
+      showToast(provider + ' sign-in is not configured yet');
+    }
+  }
+  if(introGoogle) introGoogle.addEventListener('click', () => oauth('google'));
+  if(introEmail)  introEmail.addEventListener('click', () => {
+    if(emailForm) emailForm.hidden = false;
+    if(emailInput) emailInput.focus();
+  });
+  if(emailSend) emailSend.addEventListener('click', async () => {
+    const email = (emailInput && emailInput.value || '').trim();
+    if(!email){ if(emailNote) emailNote.textContent = 'Enter your email above'; return; }
+    if(!sb){ if(emailNote) emailNote.textContent = 'Sign-in unavailable'; return; }
+    emailSend.disabled = true;
+    emailSend.querySelector('span') && (emailSend.querySelector('span').textContent = 'Sending...');
+    try {
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: location.origin + location.pathname }
+      });
+      if(error) throw error;
+      if(emailNote) emailNote.textContent = 'Check your inbox — tap the magic link to sign in.';
+    } catch(e){
+      if(emailNote) emailNote.textContent = (e && e.message) ? e.message : 'Could not send link';
+    } finally {
+      setTimeout(() => {
+        emailSend.disabled = false;
+        emailSend.querySelector('span') && (emailSend.querySelector('span').textContent = 'Send magic link');
+      }, 4000);
+    }
+  });
+
+  /* ============ AUTH STATE ============ */
+  const profileBtn   = document.getElementById('open-profile');
+  const profileDraw  = document.getElementById('profile-drawer');
+  const profileClose = document.getElementById('profile-close');
+  const profileSignOut = document.getElementById('profile-signout');
+
+  function onSignedIn(user){
+    currentUser = user;
+    hideIntro();
+    showToast('Signed in');
+  }
+  function onSignedOut(){
+    currentUser = null;
+    try { localStorage.removeItem('breathe-intro-seen'); } catch(e){}
+    showIntro();
+  }
+  if(sb){
+    // Initial session check
+    sb.auth.getSession().then(({ data }) => {
+      if(data && data.session && data.session.user) onSignedIn(data.session.user);
+    });
+    sb.auth.onAuthStateChange((event, session) => {
+      if(session && session.user) onSignedIn(session.user);
+      else if(event === 'SIGNED_OUT') onSignedOut();
+    });
+  }
+
+  if(profileBtn) profileBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if(!currentUser){ showIntro(); return; }
+    profileDraw.hidden = false;
+    renderProfile();
+  });
+  if(profileClose) profileClose.addEventListener('click', (e) => {
+    e.stopPropagation();
+    profileDraw.hidden = true;
+  });
+  if(profileSignOut) profileSignOut.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if(!sb) return;
+    await sb.auth.signOut();
+    profileDraw.hidden = true;
+    showToast('Signed out');
+  });
+
+  async function renderProfile(){
+    if(!sb || !currentUser) return;
+    document.getElementById('profile-name').textContent =
+      (currentUser.user_metadata && currentUser.user_metadata.full_name) || 'YOUR PROFILE';
+    document.getElementById('profile-email').textContent = currentUser.email || '';
+
+    const list = document.getElementById('profile-list');
+    list.innerHTML = '<div class="profile-empty">Loading…</div>';
+
+    const { data: rows, error } = await sb
+      .from('sessions')
+      .select('id, created_at, rounds, breaths, hold_times, best_hold, bpm, consistency')
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    if(error){
+      list.innerHTML = '<div class="profile-empty">Could not load history.<br/>'
+        + 'Make sure the database schema has been created in Supabase.</div>';
+      return;
+    }
+    const sessions = rows || [];
+
+    // Aggregates
+    let totalSec = 0, bestEver = 0;
+    sessions.forEach(s => {
+      const ht = Array.isArray(s.hold_times) ? s.hold_times : [];
+      ht.forEach(t => { if(t > bestEver) bestEver = t; });
+      // Approx duration: rounds * (breaths * cycleSec + avgHold + 15s recovery)
+      const breathSec = (s.breaths || 30) * 4; // rough
+      const holdSec = ht.reduce((a,b) => a+b, 0);
+      totalSec += (s.rounds || 1) * breathSec + holdSec + (s.rounds || 1) * 15;
+    });
+
+    document.getElementById('ps-sessions').textContent = sessions.length;
+    document.getElementById('ps-minutes').textContent = Math.round(totalSec / 60);
+    document.getElementById('ps-best').textContent = bestEver
+      ? (bestEver >= 60 ? Math.floor(bestEver/60) + ':' + String(Math.floor(bestEver%60)).padStart(2,'0') : bestEver + 's')
+      : '—';
+
+    if(!sessions.length){
+      list.innerHTML = '<div class="profile-empty">No sessions yet.<br/>Complete a round and your stats will appear here.</div>';
+      return;
+    }
+    list.innerHTML = sessions.map(s => {
+      const d = new Date(s.created_at);
+      const when = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
+                   ', ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+      const ht = Array.isArray(s.hold_times) ? s.hold_times : [];
+      const best = ht.length ? Math.max(...ht) : 0;
+      const stat = best >= 60 ? Math.floor(best/60)+':' + String(Math.floor(best%60)).padStart(2,'0') : best + 's';
+      return '<div class="profile-item"><span class="when">' + when + '</span>' +
+             '<span class="stat">' + (s.rounds||0) + '× rounds · best ' + stat + '</span></div>';
+    }).join('');
+  }
+
+  /* Save the just-finished session to Supabase if signed in */
+  async function persistSession(){
+    if(!sb || !currentUser) return;
+    try {
+      const ht = (state.holdTimes || []).map(n => Math.round(n));
+      const best = ht.length ? Math.max(...ht) : 0;
+      await sb.from('sessions').insert({
+        user_id: currentUser.id,
+        rounds: cfg.rounds,
+        breaths: cfg.breaths,
+        pace: cfg.pace,
+        hold_times: ht,
+        best_hold: best,
+        bpm: state.chestStats && state.chestStats.bpm || null,
+        consistency: state.chestStats && state.chestStats.consistency || null,
+        chest_tracking_used: !!cfg.chestTracking
+      });
+    } catch(e){
+      try { console.warn('session save failed', e); } catch(_){}
+    }
+  }
+
+  /* ============ INIT ============ */
+  setSoundEnabled(cfg.sound);
+  syncVolUI();
+  applyGlowColor();
+  applyTheme();
+  renderSettings();
+  renderChestStatus();
+  reset();
+  loadRuntimeConfig();
+  maybeShowIntro();
+})();
+</script>
+</body>
+</html>
