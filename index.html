@@ -313,6 +313,69 @@
   }
   body[data-theme="dark"] .auth-submit{ background: #f0f0f0 !important; color: #0b0b0b !important; }
 
+  /* "Check your inbox" panel — shown after successful signup. Replaces
+     the auth form so the user clearly sees that something happened and
+     they need to act on the email. */
+  .auth-confirm{
+    margin-top: 18px;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center;
+    gap: 10px;
+    padding: 4px 4px 0;
+  }
+  .auth-confirm[hidden]{ display: none; }
+  .auth-confirm-icon{
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.6);
+    border: 1px solid rgba(0,0,0,.10);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink);
+    margin-bottom: 4px;
+    box-shadow: 0 6px 16px -8px rgba(0,0,0,.18);
+  }
+  .auth-confirm-icon svg{ width: 30px; height: 30px; }
+  .auth-confirm-title{
+    margin: 4px 0 2px;
+    font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+    font-weight: 400;
+    font-size: 22px;
+    letter-spacing: .01em;
+    color: var(--ink);
+  }
+  .auth-confirm-body{
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .auth-confirm-body strong{
+    font-weight: 500;
+    border-bottom: 1px dotted rgba(0,0,0,.25);
+    padding-bottom: 1px;
+  }
+  .auth-confirm-hint{
+    margin: 4px 0 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    line-height: 1.55;
+    color: var(--muted);
+    max-width: 260px;
+  }
+  .auth-confirm-note{
+    min-height: 16px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .auth-confirm-note.ok{ color: #2e8540; }
+  .auth-confirm-note.err{ color: #b03a2e; }
+  .auth-confirm-links{
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 4px;
+  }
+
   /* Profile drawer — overlays the whole screen, frosted card */
   .profile-drawer{
     position: fixed; inset: 0;
@@ -1675,6 +1738,31 @@
         <button class="auth-link" id="auth-toggle-mode" type="button">New here? Create account</button>
         <span class="auth-link-sep">·</span>
         <button class="auth-link" id="auth-forgot" type="button">Forgot password?</button>
+      </div>
+    </div>
+
+    <!-- Confirm-email panel: replaces the auth form after a successful
+         signup, while we wait for the user to click the link in their inbox -->
+    <div class="auth-confirm" id="auth-confirm" hidden>
+      <div class="auth-confirm-icon" aria-hidden="true">
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="8" y="14" width="48" height="36" rx="4"/>
+          <path d="M8 18l24 16 24-16"/>
+        </svg>
+      </div>
+      <h2 class="auth-confirm-title">Check your inbox</h2>
+      <p class="auth-confirm-body">
+        We just sent a confirmation link to<br/>
+        <strong id="auth-confirm-email">your email</strong>.
+      </p>
+      <p class="auth-confirm-hint">
+        Tap the link to activate your account, then come back here to sign in.
+      </p>
+      <div class="auth-confirm-note" id="auth-confirm-note"></div>
+      <div class="auth-confirm-links">
+        <button class="auth-link" id="auth-confirm-resend" type="button">Send again</button>
+        <span class="auth-link-sep">·</span>
+        <button class="auth-link" id="auth-confirm-back" type="button">Use a different email</button>
       </div>
     </div>
 
@@ -4219,6 +4307,61 @@
     setMode(authMode === 'signin' ? 'signup' : 'signin');
   });
 
+  // Confirm-email view — shown after a successful signup that left the
+  // user unconfirmed. Replaces the auth form so the user clearly sees
+  // they need to check their inbox.
+  const authForm        = document.getElementById('auth-form');
+  const authConfirm     = document.getElementById('auth-confirm');
+  const authConfirmEmail= document.getElementById('auth-confirm-email');
+  const authConfirmNote = document.getElementById('auth-confirm-note');
+  const authConfirmResend = document.getElementById('auth-confirm-resend');
+  const authConfirmBack = document.getElementById('auth-confirm-back');
+  let pendingConfirmEmail = null;
+
+  function setConfirmNote(text, kind){
+    if(!authConfirmNote) return;
+    authConfirmNote.textContent = text || '';
+    authConfirmNote.classList.remove('ok','err');
+    if(kind) authConfirmNote.classList.add(kind);
+  }
+  function showConfirmView(email){
+    pendingConfirmEmail = email;
+    if(authForm) authForm.hidden = true;
+    if(authConfirm) authConfirm.hidden = false;
+    if(authConfirmEmail) authConfirmEmail.textContent = email;
+    setConfirmNote('');
+  }
+  function showAuthForm(){
+    pendingConfirmEmail = null;
+    if(authConfirm) authConfirm.hidden = true;
+    if(authForm) authForm.hidden = false;
+    setConfirmNote('');
+  }
+
+  if(authConfirmBack) authConfirmBack.addEventListener('click', () => {
+    showAuthForm();
+    setMode('signup');
+  });
+  if(authConfirmResend) authConfirmResend.addEventListener('click', async () => {
+    if(!pendingConfirmEmail || !sb){ setConfirmNote('Cannot resend right now', 'err'); return; }
+    authConfirmResend.disabled = true;
+    setConfirmNote('Sending…');
+    try {
+      // Re-trigger signup confirmation. Supabase exposes resend explicitly.
+      const { error } = await sb.auth.resend({
+        type: 'signup',
+        email: pendingConfirmEmail,
+        options: { emailRedirectTo: location.origin + location.pathname }
+      });
+      if(error) throw error;
+      setConfirmNote('Sent again — check your inbox.', 'ok');
+    } catch(e){
+      setConfirmNote((e && e.message) || 'Could not resend', 'err');
+    } finally {
+      setTimeout(() => { authConfirmResend.disabled = false; }, 1500);
+    }
+  });
+
   async function submitAuth(){
     const email = (authEmail && authEmail.value || '').trim();
     const password = (authPassword && authPassword.value || '');
@@ -4235,11 +4378,13 @@
         });
         if(error) throw error;
         if(data && data.session){
-          // Auto-confirmed + signed in — onAuthStateChange will hide intro
+          // Auto-confirm path — user is signed in immediately
           setNote('Welcome.', 'ok');
         } else {
-          setNote('Check your email to confirm — then come back and sign in.', 'ok');
-          setMode('signin');
+          // Confirmation-email path — switch the whole panel to the
+          // 'Check your inbox' view so the user can't miss what happened.
+          showConfirmView(email);
+          setMode('signin'); // pre-set mode for when they come back to log in
         }
       } else {
         const { error } = await sb.auth.signInWithPassword({ email, password });
@@ -4248,11 +4393,13 @@
       }
     } catch(e){
       const msg = (e && e.message) ? e.message : 'Something went wrong';
-      // Friendly common cases
       let friendly = msg;
       if(/invalid login credentials/i.test(msg)) friendly = 'Wrong email or password';
       else if(/already registered|already exists/i.test(msg)) friendly = 'That email already has an account — try sign in';
-      else if(/email not confirmed/i.test(msg)) friendly = 'Confirm your email first — check your inbox';
+      else if(/email not confirmed/i.test(msg)){
+        friendly = 'Confirm your email first — we sent a link to your inbox';
+        showConfirmView(email);
+      }
       setNote(friendly, 'err');
     } finally {
       setTimeout(() => {
