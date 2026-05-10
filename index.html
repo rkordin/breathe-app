@@ -98,7 +98,7 @@
   /* Frosted-glass: deep blur on every layer + focus-pulse keyframes
      so the leaves drift in and out of focus over time. */
   .intro-leaves.bg-back{
-    filter: blur(14px) saturate(.88) brightness(1.06);
+    filter: blur(14px) saturate(1.10) brightness(1.10);
     opacity: .85;
     animation: leaves-back 17s ease-in-out infinite,
                focus-back  11s ease-in-out infinite;
@@ -107,7 +107,7 @@
     inset: -16%;
     background-position: 30% 35%;
     background-size: 130% auto;
-    filter: blur(6px) saturate(.95) brightness(1.02);
+    filter: blur(6px) saturate(1.18) brightness(1.06);
     opacity: .55;
     transform: scale(1.05) rotate(-4deg);
     transform-origin: 60% 40%;
@@ -118,15 +118,16 @@
     inset: -22%;
     background-position: 70% 70%;
     background-size: 160% auto;
-    filter: blur(20px) saturate(1.00) brightness(1.05);
+    filter: blur(20px) saturate(1.15) brightness(1.08);
     opacity: .50;
     mix-blend-mode: multiply;
     animation: leaves-front 14s ease-in-out infinite,
                leaves-spin  23s ease-in-out infinite,
                focus-front  13s ease-in-out infinite;
   }
-  /* "Leaf poking out of frosted glass" — a sharp crop of the same photo,
-     masked to a soft elliptical region that fades in and out. */
+  /* "Leaves poking out of frosted glass" — three sharp crops, masked to
+     soft elliptical regions, fading in and out at staggered timings so
+     something is always crystallising into focus somewhere. */
   .intro-leaves.bg-sharp{
     inset: -8%;
     background-image: url('/leaves.jpg');
@@ -135,10 +136,36 @@
     filter: none;
     opacity: 0;
     mix-blend-mode: normal;
-    -webkit-mask-image: radial-gradient(ellipse 26% 32% at 32% 36%, #000 35%, transparent 78%);
-            mask-image: radial-gradient(ellipse 26% 32% at 32% 36%, #000 35%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse 24% 30% at 30% 34%, #000 35%, transparent 78%);
+            mask-image: radial-gradient(ellipse 24% 30% at 30% 34%, #000 35%, transparent 78%);
     animation: leaves-back 17s ease-in-out infinite,
                sharp-fade 22s ease-in-out infinite;
+  }
+  .intro-leaves.bg-sharp-2{
+    inset: -8%;
+    background-image: url('/leaves.jpg');
+    background-size: 240% auto;
+    background-position: 78% 72%;
+    filter: none;
+    opacity: 0;
+    mix-blend-mode: normal;
+    -webkit-mask-image: radial-gradient(ellipse 22% 26% at 72% 70%, #000 32%, transparent 76%);
+            mask-image: radial-gradient(ellipse 22% 26% at 72% 70%, #000 32%, transparent 76%);
+    animation: leaves-front 14s ease-in-out infinite,
+               sharp-fade-b 27s ease-in-out infinite;
+  }
+  .intro-leaves.bg-sharp-3{
+    inset: -8%;
+    background-image: url('/leaves.jpg');
+    background-size: 200% auto;
+    background-position: 52% 18%;
+    filter: none;
+    opacity: 0;
+    mix-blend-mode: normal;
+    -webkit-mask-image: radial-gradient(ellipse 18% 22% at 60% 22%, #000 28%, transparent 72%);
+            mask-image: radial-gradient(ellipse 18% 22% at 60% 22%, #000 28%, transparent 72%);
+    animation: leaves-mid 16s ease-in-out infinite,
+               sharp-fade-c 31s ease-in-out infinite;
   }
   .intro-veil{
     position: absolute; inset: 0;
@@ -399,7 +426,7 @@
     transform-origin: 50% 50%;
   }
   .bg-leaves.bg-back{
-    filter: blur(14px) saturate(.88) brightness(1.06);
+    filter: blur(14px) saturate(1.10) brightness(1.10);
     opacity: .80;
     animation: leaves-back 17s ease-in-out infinite,
                focus-back  11s ease-in-out infinite;
@@ -408,7 +435,7 @@
     inset: -16%;
     background-position: 30% 35%;
     background-size: 130% auto;
-    filter: blur(6px) saturate(.95) brightness(1.02);
+    filter: blur(6px) saturate(1.18) brightness(1.06);
     opacity: .55;
     transform: scale(1.05) rotate(-4deg);
     transform-origin: 60% 40%;
@@ -419,7 +446,7 @@
     inset: -22%;
     background-position: 70% 70%;
     background-size: 160% auto;
-    filter: blur(20px) saturate(1.00) brightness(1.05);
+    filter: blur(20px) saturate(1.15) brightness(1.08);
     opacity: .55;
     mix-blend-mode: multiply;
     animation: leaves-front 14s ease-in-out infinite,
@@ -434,10 +461,36 @@
     filter: none;
     opacity: 0;
     mix-blend-mode: normal;
-    -webkit-mask-image: radial-gradient(ellipse 26% 32% at 32% 36%, #000 35%, transparent 78%);
-            mask-image: radial-gradient(ellipse 26% 32% at 32% 36%, #000 35%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse 24% 30% at 30% 34%, #000 35%, transparent 78%);
+            mask-image: radial-gradient(ellipse 24% 30% at 30% 34%, #000 35%, transparent 78%);
     animation: leaves-back 17s ease-in-out infinite,
                sharp-fade 22s ease-in-out infinite;
+  }
+  .bg-leaves.bg-sharp-2{
+    inset: -8%;
+    background-image: url('/leaves.jpg');
+    background-size: 240% auto;
+    background-position: 78% 72%;
+    filter: none;
+    opacity: 0;
+    mix-blend-mode: normal;
+    -webkit-mask-image: radial-gradient(ellipse 22% 26% at 72% 70%, #000 32%, transparent 76%);
+            mask-image: radial-gradient(ellipse 22% 26% at 72% 70%, #000 32%, transparent 76%);
+    animation: leaves-front 14s ease-in-out infinite,
+               sharp-fade-b 27s ease-in-out infinite;
+  }
+  .bg-leaves.bg-sharp-3{
+    inset: -8%;
+    background-image: url('/leaves.jpg');
+    background-size: 200% auto;
+    background-position: 52% 18%;
+    filter: none;
+    opacity: 0;
+    mix-blend-mode: normal;
+    -webkit-mask-image: radial-gradient(ellipse 18% 22% at 60% 22%, #000 28%, transparent 72%);
+            mask-image: radial-gradient(ellipse 18% 22% at 60% 22%, #000 28%, transparent 72%);
+    animation: leaves-mid 16s ease-in-out infinite,
+               sharp-fade-c 31s ease-in-out infinite;
   }
   /* Soft white veil to keep UI readable on top of the leaves */
   .bg-veil{
@@ -450,48 +503,64 @@
 
   @keyframes leaves-back{
     0%,100%{ transform: translate3d(0,0,0)        scale(1.10); }
-    25%    { transform: translate3d(-10px,4px,0)  scale(1.115); }
-    50%    { transform: translate3d(8px,-5px,0)   scale(1.12); }
-    75%    { transform: translate3d(-4px,7px,0)   scale(1.108); }
+    25%    { transform: translate3d(-32px,14px,0)  scale(1.16); }
+    50%    { transform: translate3d(28px,-18px,0)  scale(1.20); }
+    75%    { transform: translate3d(-14px,24px,0)  scale(1.14); }
   }
   @keyframes leaves-mid{
-    0%,100%{ transform: scale(1.05)  translate3d(0,0,0)         rotate(-4deg); }
-    25%    { transform: scale(1.06)  translate3d(8px,-3px,0)    rotate(-3.4deg); }
-    50%    { transform: scale(1.05)  translate3d(-6px,5px,0)    rotate(-4.6deg); }
-    75%    { transform: scale(1.07)  translate3d(4px,-7px,0)    rotate(-3.6deg); }
+    0%,100%{ transform: scale(1.05)  translate3d(0,0,0)          rotate(-4deg); }
+    25%    { transform: scale(1.10)  translate3d(26px,-12px,0)   rotate(-2.2deg); }
+    50%    { transform: scale(1.04)  translate3d(-22px,18px,0)   rotate(-5.4deg); }
+    75%    { transform: scale(1.11)  translate3d(14px,-24px,0)   rotate(-2.8deg); }
   }
   @keyframes leaves-front{
     0%,100%{ transform: translate3d(0,0,0)        scale(1.20); }
-    20%    { transform: translate3d(14px,-6px,0)  scale(1.205); }
-    40%    { transform: translate3d(-9px,8px,0)   scale(1.215); }
-    60%    { transform: translate3d(11px,4px,0)   scale(1.21); }
-    80%    { transform: translate3d(-7px,-9px,0)  scale(1.222); }
+    20%    { transform: translate3d(38px,-18px,0) scale(1.22); }
+    40%    { transform: translate3d(-26px,24px,0) scale(1.26); }
+    60%    { transform: translate3d(34px,12px,0)  scale(1.23); }
+    80%    { transform: translate3d(-22px,-26px,0) scale(1.27); }
   }
   @keyframes leaves-spin{
     0%,100%{ rotate: 0deg; }
-    33%    { rotate: 0.5deg; }
-    66%    { rotate: -0.4deg; }
+    33%    { rotate: 1.4deg; }
+    66%    { rotate: -1.2deg; }
   }
   /* Focus-pulse — leaves drift in and out of focus, staggered so the
-     three layers never sharpen together. Slow, breath-like. */
+     three layers never sharpen together. Slow, breath-like.
+     Brightness/saturate boosted for richer colour. */
   @keyframes focus-back{
-    0%,100%{ filter: blur(14px) saturate(.88) brightness(1.06); }
-    50%   { filter: blur(8px)  saturate(.92) brightness(1.05); }
+    0%,100%{ filter: blur(14px) saturate(1.10) brightness(1.10); }
+    50%   { filter: blur(7px)  saturate(1.20) brightness(1.12); }
   }
   @keyframes focus-mid{
-    0%,100%{ filter: blur(6px)  saturate(.95) brightness(1.02); }
-    50%   { filter: blur(2px)  saturate(1.00) brightness(1.02); }
+    0%,100%{ filter: blur(6px)  saturate(1.18) brightness(1.06); }
+    50%   { filter: blur(2px)  saturate(1.30) brightness(1.08); }
   }
   @keyframes focus-front{
-    0%,100%{ filter: blur(20px) saturate(1.00) brightness(1.05); }
-    50%   { filter: blur(12px) saturate(1.02) brightness(1.05); }
+    0%,100%{ filter: blur(20px) saturate(1.15) brightness(1.08); }
+    50%   { filter: blur(11px) saturate(1.30) brightness(1.10); }
   }
-  /* Sharp leaf reveal — appears, holds, dissolves back into the haze. */
+  /* Sharp-leaf reveals — three keyframes with offset peak times so the
+     sharp leaves never crystallise simultaneously. */
   @keyframes sharp-fade{
     0%,100%{ opacity: 0; }
-    35%   { opacity: .82; }
-    55%   { opacity: .82; }
-    72%   { opacity: 0; }
+    32%   { opacity: .85; }
+    50%   { opacity: .85; }
+    68%   { opacity: 0; }
+  }
+  @keyframes sharp-fade-b{
+    0%,100%{ opacity: 0; }
+    18%   { opacity: 0; }
+    44%   { opacity: .80; }
+    62%   { opacity: .80; }
+    80%   { opacity: 0; }
+  }
+  @keyframes sharp-fade-c{
+    0%,100%{ opacity: 0; }
+    25%   { opacity: 0; }
+    52%   { opacity: .75; }
+    66%   { opacity: .75; }
+    85%   { opacity: 0; }
   }
 
   /* Dark theme: dim the foliage and warm the veil */
@@ -1271,6 +1340,8 @@
     <div class="intro-leaves bg-mid"></div>
     <div class="intro-leaves bg-front"></div>
     <div class="intro-leaves bg-sharp"></div>
+    <div class="intro-leaves bg-sharp-2"></div>
+    <div class="intro-leaves bg-sharp-3"></div>
     <div class="intro-veil"></div>
   </div>
   <div class="intro-card">
@@ -1326,6 +1397,8 @@
   <div class="bg-leaves bg-mid"></div>
   <div class="bg-leaves bg-front"></div>
   <div class="bg-leaves bg-sharp"></div>
+  <div class="bg-leaves bg-sharp-2"></div>
+  <div class="bg-leaves bg-sharp-3"></div>
   <div class="bg-veil"></div>
 </div>
 <div class="pink-glow" id="pink-glow"></div>
@@ -2400,15 +2473,28 @@
      switch and at expected volume. We always create the element on the
      user gesture; if ambient is OFF we just keep volume at 0. */
   let birdsAudio = null;
+  /* Birds audio goes through a Web Audio gain node because iOS Safari
+     ignores HTMLAudioElement.volume (it's read-only there, always at
+     system volume). With a GainNode we get real volume control. */
+  let birdsSource = null;   // MediaElementAudioSourceNode
+  let birdsGain = null;     // GainNode
   function ensureBirds(){
     if(!birdsAudio){
       birdsAudio = new Audio('/birds.mp3');
       birdsAudio.loop = true;
       birdsAudio.preload = 'auto';
-      // No crossOrigin — same-origin asset; the attribute trips up iOS for
-      // some Vercel cache configurations and silently blocks playback.
       birdsAudio.playsInline = true;
-      birdsAudio.volume = 0;
+      birdsAudio.volume = 1.0;  // controlled via GainNode below; full volume here
+    }
+    // Wire to Web Audio once the AudioContext exists. Idempotent — if the
+    // source is already created, this is a no-op.
+    if(audioCtx && !birdsSource){
+      try {
+        birdsSource = audioCtx.createMediaElementSource(birdsAudio);
+        birdsGain = audioCtx.createGain();
+        birdsGain.gain.value = 0;
+        birdsSource.connect(birdsGain).connect(audioCtx.destination);
+      } catch(e){ /* already connected or unsupported */ }
     }
     return birdsAudio;
   }
@@ -2454,11 +2540,23 @@
     });
   }
   function setAmbientVolume(v){
-    if(!birdsAudio) return;
+    if(!birdsAudio && !birdsGain) return;
     fadeAmbientVolume(v, 0.25);
   }
   let __ambFadeId = null;
   function fadeAmbientVolume(target, seconds, onDone){
+    // Web Audio path (works on iOS — what HTMLAudioElement.volume cannot)
+    if(birdsGain && audioCtx){
+      const t = audioCtx.currentTime;
+      try {
+        birdsGain.gain.cancelScheduledValues(t);
+        birdsGain.gain.setValueAtTime(birdsGain.gain.value, t);
+        birdsGain.gain.linearRampToValueAtTime(Math.max(0, Math.min(1, target)), t + Math.max(0.05, seconds));
+      } catch(e){}
+      if(onDone) setTimeout(onDone, seconds * 1000);
+      return;
+    }
+    // Fallback (desktop browsers) — set element.volume
     if(!birdsAudio) return;
     if(__ambFadeId) clearInterval(__ambFadeId);
     const start = birdsAudio.volume;
@@ -3391,17 +3489,18 @@
     cfg.ambientVol = v;
     cfg.ambient = v > 0 ? 'birds' : 'none';
     if(save) saveConfig();
+    // Make sure both the AudioContext and the birds Web Audio graph are
+    // wired (needed for iOS where element.volume is read-only). Then
+    // start playback if not already, and let setAmbientVolume ramp the
+    // GainNode — that's what actually controls volume on iOS.
     if(v > 0){
       try {
+        ensureAudio();
         ensureBirds();
-        if(birdsAudio){
-          // onDown muted the audio for the iOS unlock; unmute now so the
-          // ramp-in volume is actually audible.
+        if(birdsAudio && birdsAudio.paused){
           birdsAudio.muted = false;
-          if(birdsAudio.paused){
-            const p = birdsAudio.play();
-            if(p && p.catch) p.catch(()=>{});
-          }
+          const p = birdsAudio.play();
+          if(p && p.catch) p.catch(()=>{});
         }
       } catch(e){}
     }
@@ -3421,18 +3520,10 @@
       e.stopPropagation();
       drag = { moved: false, startPct: (cfg.ambientVol ?? 0.4) * 100 };
       volTrack.classList.add('dragging');
-      // iOS unlock: prime the audio element on this user gesture so a
-      // later drag (different gesture phase) can call play() successfully.
-      // We start it muted so the user doesn't hear anything during the
-      // tap itself — applyVol() ramps real volume in on drag.
-      try {
-        const a = ensureBirds();
-        if(a && a.paused){
-          a.muted = true;
-          const p = a.play();
-          if(p && p.catch) p.catch(()=>{});
-        }
-      } catch(_){}
+      // Belt + braces: ensure audio is unlocked on this gesture too,
+      // in case the global unlock missed (capture-phase listeners can be
+      // skipped when other handlers throw or the page just loaded).
+      try { unlockAllAudio(); } catch(_){}
       // Capture pointer for smooth drag
       try { e.pointerId != null && volTrack.setPointerCapture(e.pointerId); } catch(_){}
     };
