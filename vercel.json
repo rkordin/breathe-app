@@ -4,5 +4,19 @@
   "functions": {
     "api/voice.js": { "maxDuration": 30 },
     "api/config.js": { "maxDuration": 5 }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "rok-hof.vercel.app" }],
+      "destination": "https://thebreathe.app/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.thebreathe.app" }],
+      "destination": "https://thebreathe.app/:path*",
+      "permanent": true
+    }
+  ]
 }
