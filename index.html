@@ -2349,6 +2349,19 @@
 
   const PREPARE_HOLD = "Prepare to hold your breath after this last exhale.";
 
+  /* In-round voice cues — technique reminder, midpoint check-in, and
+     advance warning that the hold is coming. Said by Noemi during the
+     active inhale/exhale phase. */
+  const BREATH_TECHNIQUE_1 = "Belly first, then chest. Fill yourself up. Let the exhale fall out.";
+  const BREATH_TECHNIQUE_2 = "Breathe big and easy. The body knows the way.";
+  const HALFWAY_CHECK      = "Halfway there. Stay with the rhythm.";
+  const THREE_MORE         = "Three more inhales. Then we hold.";
+
+  /* In-hold voice cues — paraphrased Wim Hof philosophy. Reassures that
+     duration doesn't matter and lightheadedness is natural. */
+  const HOLD_GUIDE_LENGTH  = "There is no goal here. Hold as long as feels right. The length does not matter.";
+  const HOLD_GUIDE_FEELING = "If you feel lightheaded or your hands tingle, it is natural. Stay calm. Welcome it.";
+
   /* Soothing lines — stillness, the breath hold itself, cell nourishment,
      and clever / inspirational. NO references to breaths between breaths. */
   const SOOTHING_HOLD = [
@@ -2402,6 +2415,12 @@
     WELCOME,
     WELCOME_WITH_CHEST,
     PREPARE_HOLD,
+    BREATH_TECHNIQUE_1,
+    BREATH_TECHNIQUE_2,
+    HALFWAY_CHECK,
+    THREE_MORE,
+    HOLD_GUIDE_LENGTH,
+    HOLD_GUIDE_FEELING,
     'Hold your breath',
     'Take a deep breath in and hold',
     ROUND_RELEASE(1), ROUND_RELEASE(2), ROUND_RELEASE(3),
@@ -3546,14 +3565,26 @@
   function nextBreath(){
     if(state.paused) return;
     const p = PACES[cfg.pace];
-    const isLast = (state.breath === cfg.breaths - 1);
+    const halfwayIdx   = Math.floor(cfg.breaths / 2) - 1; // mid-round announcement
+    const threeLeftIdx = cfg.breaths - 3;                 // 3 inhales before the hold
 
     setPhase('inhale');
     setPhaseLabel('BREATHE IN');
     setOrbCount(state.breath + 1);
     playBreath('inhale', p.in);
-    // Heads-up before the very last exhale of the round
-    if(isLast) speak(PREPARE_HOLD, { volume: 0.95 });
+
+    // Voice cues — Noemi guides at three key moments per round:
+    //   • breath 2  → technique reminder (belly first, then chest)
+    //   • halfway   → encouragement (only on rounds ≥ 12 breaths)
+    //   • 3 from end → 'Three more, then we hold'
+    // Each cue triggers only once per round because state.breath increments.
+    if(state.breath === 1){
+      speak(BREATH_TECHNIQUE_1, { volume: 0.9 });
+    } else if(state.breath === halfwayIdx && cfg.breaths >= 12){
+      speak(HALFWAY_CHECK, { volume: 0.9 });
+    } else if(state.breath === threeLeftIdx && cfg.breaths >= 8){
+      speak(THREE_MORE, { volume: 0.95 });
+    }
     later(() => {
       if(state.paused) return;
       setPhase('exhale');
@@ -3581,8 +3612,15 @@
     playChime([392.00, 523.25]);
     // Brief delay so "Hold your breath" doesn't trample the chime
     later(() => speak('Hold your breath', { volume: 1.0 }), 220);
-    // Gentle, encouraging lines — first one ~16s in, then every ~22s with jitter
-    scheduleSoothing(SOOTHING_HOLD, 16000, 22000);
+
+    // Wim Hof philosophy cues, said early in the hold so they reach the
+    // user before discomfort sets in: hold length is not a contest, and
+    // lightheadedness / tingling is part of the process.
+    later(() => speak(HOLD_GUIDE_LENGTH,  { volume: 0.88 }), 5000);
+    later(() => speak(HOLD_GUIDE_FEELING, { volume: 0.88 }), 14000);
+
+    // Gentle SOOTHING_HOLD rotation starts after the two guides above
+    scheduleSoothing(SOOTHING_HOLD, 24000, 22000);
     state.holdStartedAt = performance.now();
     state.waitTap = (cfg.hold === 'tap');
     setBreathePromptVisible(state.waitTap);
